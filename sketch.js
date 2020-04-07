@@ -9,7 +9,7 @@ const getTwitterData = async () => {
     return await response.json().then(json => {
         console.log("json has been gathered. Returning data.", json.data);
         data = json.data;
-    }); //extract JSON from the http response
+    }); //Extract JSON from the http response
 };
 
 console.log("Trying to get data...");
