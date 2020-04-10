@@ -43,4 +43,17 @@ app.get('/data', (req, res) => {
     });
 });
 
+//-------------------------------------------------------------------------------------------
+
+/*
+let dummy = require("dummy");
+app.get('/data/test', (req, res) => {
+  rp(dummy.requestOptionsTest).then(response => {
+      res.send(response);
+  }).catch((err) => {
+    console.log('API call error:', err.message);
+  });
+});
+
+*/
 
