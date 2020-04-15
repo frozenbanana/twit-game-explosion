@@ -5,6 +5,17 @@ const express = require('express');
 // Create the app
 const app = express();
 
+// Helper function to save data from response
+const saveData = (jsonData) => {
+  console.log('Saving it on disk because CoinMarketCap are cheap.');
+  let fs = require('fs');
+  fs.writeFile("test.json", jsonData, function (err) {
+    if (err) {
+      console.log(err);
+    }
+  });
+};
+
 // Set up the server
 // process.env.PORT is related to deploying on heroku
 const server = app.listen(process.env.PORT || 3000, listen);
@@ -16,12 +27,10 @@ function listen() {
   console.log('Example app listening at http://' + host + ':' + port);
 }
 
-app.use(express.static('public'));
-
 const rp = require('request-promise');
 const requestOptions = {
   method: 'GET',
-  uri: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest',
+  uri: '',
   qs: {
     'start': '1',
     'limit': '5000',
@@ -34,26 +43,27 @@ const requestOptions = {
   gzip: true
 };
 
-/* This part should request the data from API */
 app.get('/data', (req, res) => {
-    rp(requestOptions).then(response => {
-        res.send(response);
-    }).catch((err) => {
-      console.log('API call error:', err.message);
-    });
-});
-
-//-------------------------------------------------------------------------------------------
-
-/*
-let dummy = require("dummy");
-app.get('/data/test', (req, res) => {
-  rp(dummy.requestOptionsTest).then(response => {
-      res.send(response);
+  requestOptions.uri = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?sort=name';
+  console.log('This is the request', requestOptions);
+  rp(requestOptions).then(response => {
+    // console.log('Attempting to save response');
+    // saveData(response.json());
+    res.send(response); // send response to sketch.js (the client)
   }).catch((err) => {
     console.log('API call error:', err.message);
   });
 });
 
-*/
+// use as home ('/')
+app.use(express.static('public'));
+
+/* This part should request the data from API */
+// "http://localhost:3001/data"
+// "http://localhost:3001/data?q=veganska-fiskpinnar"
+// "http://google.com/search?q=veganska-fiskpinnar"
+
+// Requests from sketch.js
+// "http://localhost:3001/data?coin=btc"
+// -------------------------
 

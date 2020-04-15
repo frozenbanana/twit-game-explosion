@@ -13,25 +13,40 @@ const getTwitterData = async () => {
     }); //Extract JSON from the http response
 };
 
-const getApiData = async (api_type) => {
-    let api_link = "http://localhost:3001/" + api_type;
-    console.log("Accessing api data for: ", api_link);
+const download = (content, fileName, contentType) => {
+    let a = document.createElement("a");
+    let file = new Blob([JSON.stringify(content)], {type: contentType});
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+}
 
-    const promise = await fetch(api_link);
+
+const getApiData = async (api_url) => {
+    let api_link = "http://localhost:3001/" + api_url;
+    console.log("Accessing api data for: ", api_link);
     
-    return await promise.json().then(json => {
-        console.log("json has been gathered. Returning data.", json.data);
-        api_data = json.data; //could change to return but doesnt work to do so.
-    });
-    
-   //return await promise.json().data;
+    // It was a promise, but await-ing it turned it into a Response
+    const response = await fetch(api_link);
+    // Returning a promise since it says async (api_type)
+    return response.json().then(json => json.data);
+}
+
+const getDiskData = () => {
+      return data;
 }
 
 console.log("Trying to get data...");
-
-// getTwitterData();
-// getCMarketData();
-getApiData("data");
+let url = "data";
+getApiData(url).then(data => {
+    console.log('We got the data', data);
+    // download(data, 'data.json', 'text/plain');
+    api_data = data;
+}).catch(err => {
+    console.log('Failed to retreive data', err);
+    // if (err.statusCode == xxx) {}
+    api_data = getDiskData('data/data.json');
+});
 
 function setup() {
     createCanvas(640, 400);
@@ -45,11 +60,11 @@ function draw() {
     let y = random(0, height);
     //console.log("data is: ", data);
     if (api_data.length > 0) {
-        for (let i = 0; i < api_data.length; i++) {
+        for (let i = api_data.length-1; i > api_data.length-11; i--) {
             let col = color(random(100,255), random(100,255), random(100,255));
             stroke(col);
             fill(col);
-            text(api_data[i].name, random(0, width), random(0, height));
+            text(api_data[i].name, random(0, width-50), random(0, height-50));
         }
         noLoop();
     }
