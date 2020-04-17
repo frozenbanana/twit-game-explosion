@@ -6,6 +6,6 @@
 
 2. Open project folder in editor
 
-3. Install livereload `pip3 install livereload`
+3. Open a terminal, stand in project folder and run `node server.js`
 
-4. Open a terminal, stand in project folder and run `livereload`
+4. Open localhost and enjoy.

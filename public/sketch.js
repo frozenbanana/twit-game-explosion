@@ -37,7 +37,7 @@ const getDiskData = () => {
 
 console.log("Trying to get data...");
 
-getApiData("coinmarket?sort=name")
+getApiData("coinmarket?sort=volume_24h")
     .then((data) => {
         console.log("We got the data", data);
         // download(data, 'coinmarket.json', 'text/plain');
@@ -73,7 +73,7 @@ function draw() {
     // let y = random(0, height);
     //console.log("data is: ", data);
     if (api_data.length > 0 && reddit_data.children.length > 0) {
-        for (let i = api_data.length - 1; i > api_data.length - 11; i--) {
+        for (let i = 0; i < 10; i++) {
             let col = color(
                 random(100, 255),
                 random(100, 255),
