@@ -3,6 +3,7 @@
 let reddit_data = { children: [] };
 let api_data = [];
 
+/*
 const getTwitterData = async () => {
     const response = await fetch(
         "http://dummy.restapiexample.com/api/v1/employees"
@@ -12,14 +13,7 @@ const getTwitterData = async () => {
         twitter_data = json.data;
     }); //Extract JSON from the http response
 };
-
-const download = (content, fileName, contentType) => {
-    let a = document.createElement("a");
-    let file = new Blob([JSON.stringify(content)], { type: contentType });
-    a.href = URL.createObjectURL(file);
-    a.download = fileName;
-    a.click();
-};
+*/
 
 const getApiData = async (api_url) => {
     let api_link = "http://localhost:3001/" + api_url;
@@ -31,24 +25,18 @@ const getApiData = async (api_url) => {
     return response.json().then((json) => json.data);
 };
 
-const getDiskData = () => {
-    return data;
-};
-
 console.log("Trying to get data...");
 
-getApiData("coinmarket?sort=volume_24h")
+getApiData("coinmarket")
     .then((data) => {
-        console.log("We got the data", data);
-        // download(data, 'coinmarket.json', 'text/plain');
+        console.log("getApiData::Successfully retreived data:", data);
         api_data = data;
     })
     .catch((err) => {
-        console.log("Failed to retreive data", err);
-        // if (err.statusCode == xxx) {}
-        // api_data = getDiskData("data/data.json");
+        console.log("getApiData::Failed to retreive data:", err);
     });
 
+/*
 getApiData("reddit?subreddit=bitcoin")
     .then((data) => {
         console.log("We got the data", data);
@@ -61,6 +49,9 @@ getApiData("reddit?subreddit=bitcoin")
         // api_data = getDiskData("data/data.json");
     });
 
+*/
+//-------------------------------------------------------------------------------------------------
+
 function setup() {
     createCanvas(640, 400);
     background(0);
@@ -72,7 +63,7 @@ function draw() {
     // let x = random(0, width);
     // let y = random(0, height);
     //console.log("data is: ", data);
-    if (api_data.length > 0 && reddit_data.children.length > 0) {
+    if (api_data.length > 0) {
         for (let i = 0; i < 10; i++) {
             let col = color(
                 random(100, 255),
@@ -87,13 +78,23 @@ function draw() {
                 random(0, height - 50)
             );
         }
-
-        for (let i = 0; i < reddit_data.children.length; i++) {
-            let offset = 10;
-            let col = color(255, 100, 100);
-            stroke(col);
-            ellipse(i * offset, height / 2, 5, 5);
-        }
+        
         noLoop();
     }
+
+    let nrOfPoints = 3;
+    let testPointCoord = 70;
+    let p1 = 70;
+    let p2 = 70*1.5;
+    let p3 = 70*2;
+    for (let i = 0; i < nrOfPoints; i++)
+        {
+        stroke(255);
+        point(p1,p2);
+        point(p2,p3);
+        point(p1,p3);
+
+        
+        }
+    noLoop();
 }

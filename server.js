@@ -6,18 +6,27 @@ const express = require("express");
 const app = express();
 const rp = require("request-promise");
 
-// Helper function to save data from response
-const saveData = (jsonData) => {
-    console.log("Saving it on disk because CoinMarketCap are cheap.");
-    let fs = require("fs");
-    fs.writeFile("test.json", jsonData, function (err) {
-        if (err) {
-            console.log(err);
-        }
-    });
-};
+// get the data
+var dir = require('node-dir');
 
-// Set up the server
+let bucket = [];
+let idx = 0;
+dir.readFiles("data/coinmarketcap",
+    function(err, content, next) {
+        if (err) throw err;
+        console.log('Reading file: ', idx++);
+        
+        // console.log('content:', content);  // get content of files
+        bucket.push(JSON.parse(content));
+        next();
+    },
+    function(err, files){
+        if (err) throw err;
+        //console.log('finished reading files:', bucket.length, files); // get filepath 
+   });  
+
+
+// Set up the server-------------------------------------------------------------------------------
 // process.env.PORT is related to deploying on heroku
 const server = app.listen(process.env.PORT || 3000, listen);
 
@@ -28,7 +37,7 @@ function listen() {
     console.log("Example app listening at http://" + host + ":" + port);
 }
 
-//REDDIT------------------------------------------------------------------------------------------------
+//REDDIT
 app.get("/reddit", (req, res) => {
     let subreddit = req.query.subreddit;
     const requestOptions = {
@@ -39,8 +48,6 @@ app.get("/reddit", (req, res) => {
     console.log("This is the request", requestOptions);
     rp(requestOptions)
         .then((response) => {
-            // console.log('Attempting to save response');
-            // saveData(response.json());
             res.send(response); // send response to sketch.js (the client)
         })
         .catch((err) => {
@@ -48,43 +55,10 @@ app.get("/reddit", (req, res) => {
         });
 });
 
-//END REDDIT--------------------------------------------------------------------------------------------
-
-//COINMARKETCAP-----------------------------------------------------------------------------------------
-
-app.get("/coinmarket", (req, res) => {
-    console.log(req.query);
-    let sorting = req.query.sort;
-    const requestOptions = {
-        method: "GET",
-        uri:
-            "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?sort=" +
-            sorting,
-        qs: {
-            start: "1",
-            limit: "5000",
-            convert: "USD",
-        },
-        headers: {
-            "X-CMC_PRO_API_KEY": process.env.COIN_MARKET_CAP_API,
-        },
-        json: true,
-        gzip: true,
-    };
-
-    console.log("This is the request:", requestOptions);
-
-    rp(requestOptions)
-        .then((response) => {
-            // console.log('Attempting to save response');
-            // saveData(response.json());
-            res.send(response); // send response to sketch.js (the client)
-        })
-        .catch((err) => {
-            console.log("API call error:", err.message);
-        });
+//COINMARKETCAP
+app.get("/coinmarket", (req, res) => { 
+   res.send({ data: bucket }); // send response to sketch.js (the client)
 });
-//END COINMARKETCAP-------------------------------------------------------------------------------------
 
 // use as home ('/')
 app.use(express.static("public"));
