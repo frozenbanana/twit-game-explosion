@@ -36,7 +36,7 @@ getApiData("coinmarket")
         api_data = data;
 
         api_data.forEach(dataAtTimestamp => {
-            coinmarketTop10.push(dataAtTimestamp.data.slice(0,10));
+            coinmarketTop10.push(dataAtTimestamp.data.slice(0, 10));
         });
 
         // coinmarketTop10[0].quote.volume_24h
@@ -49,7 +49,7 @@ getApiData("coinmarket")
 
 getApiData("reddit?subreddit=bitcoin")
     .then((data) => {
-        console.log("We got the data", data);
+        console.log("We got the reddit?subreddit=bitcoin", data);
         // download(data, 'reddit.json', 'text/plain');
         reddit_data = data;
     })
@@ -60,17 +60,42 @@ getApiData("reddit?subreddit=bitcoin")
     });
 
 
-//-------------------------------------------------------------------------------------------------
+//-----GLOBALS-------------------------------------------------------------------------------
+
+let baseX;
+let baseY;
+let topWidth;
+let topHeight;
+
+//-----HELPER FUNCTIONS ----------------------------------------------------------------------
+
+drawLedger = (names, posx, posy) => {
+    noFill();
+    rect(posx, posy, 100, names.length * 15 + 20);
+    stroke(color('white'));
+    for (let i = 0; i < names.length; i++) {
+        stroke(colors[i]);
+        fill(colors[i]);
+        text(names[i], posx+5, 20 + i * 15);
+    }
+};
 
 
-// let normalizeData = (data) => {
-    
-// };
-//-------------------------------------------------------------------------------------------------
 function setup() {
-    createCanvas(640, 400);
+    createCanvas(1280, 800);
     background(0);
     textSize(10);
+    colorMode(HSB);
+    colors = [];
+    for (let i = 0; i < 10; i++) {
+        colors.push(color(i * 25, 50, 150));
+    }
+
+    // Assignment of global variables
+    baseX = 150;
+    baseY = 50;
+    topWidth = width - 2 * baseX;
+    topHeight = height - 2 * baseY;
 }
 
 function draw() {
@@ -78,48 +103,27 @@ function draw() {
     // let x = random(0, width);
     // let y = random(0, height);
     console.log("data is: ", coinmarketTop10);
-    if (api_data.length > 0) {
-        for (let i = 0; i < 10; i++) {
-            let col = color(
-                random(100, 255),
-                random(100, 255),
-                random(100, 255)
-            );
-            stroke(col);
-            fill(col);
-            let x = random(0, width - 50);
-            let y = random(0, height - 50);
-            let normFact = coinmarketTop10[0][0].quote.USD.volume_24h;
-            ellipse(x,y, 50* coinmarketTop10[0][i].quote.USD.volume_24h/normFact);
+    if (coinmarketTop10.length > 0) {
+        //Variables
+        let normFact = coinmarketTop10[0][0].quote.USD.volume_24h;
+        let numOfDates = coinmarketTop10.length;
+
+        for (let i = 0; i < numOfDates; i++) {
+
+            let x = baseX + i * (topWidth / numOfDates);
+            for (let j = 0; j < coinmarketTop10[i].length; j++) {
+                let y = height - baseY - (coinmarketTop10[i][j].quote.USD.volume_24h / normFact) * topHeight;
+                stroke(colors[j]);
+                fill(colors[j]);
+                ellipse(x, y, 20);
+            }
 
 
-            stroke(127);
-
-            text(
-                coinmarketTop10[0][i].name,
-                x,
-                y,
-            );
-            
-            
         }
-        
+
+        let names = coinmarketTop10[0].map(a => a.name);
+        drawLedger(names, 25, 5);
+
         noLoop();
     }
-
-    // let nrOfPoints = 3;
-    // let testPointCoord = 70;
-    // let p1 = 70;
-    // let p2 = 70*1.5;
-    // let p3 = 70*2;
-    // for (let i = 0; i < nrOfPoints; i++)
-    //     {
-    //     stroke(255);
-    //     point(p1,p2);
-    //     point(p2,p3);
-    //     point(p1,p3);
-
-        
-    //     }
-    // noLoop();
 }
