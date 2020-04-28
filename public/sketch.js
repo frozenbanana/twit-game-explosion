@@ -31,6 +31,7 @@ getApiData("coinmarket")
     .then((data) => {
         console.log("getApiData::Successfully retreived data:", data);
         api_data = data;
+        normalizeData(api_data);
     })
     .catch((err) => {
         console.log("getApiData::Failed to retreive data:", err);
@@ -52,6 +53,11 @@ getApiData("reddit?subreddit=bitcoin")
 */
 //-------------------------------------------------------------------------------------------------
 
+
+let normalizeData = (data) => {
+    
+};
+//-------------------------------------------------------------------------------------------------
 function setup() {
     createCanvas(640, 400);
     background(0);
@@ -62,7 +68,7 @@ function draw() {
     //console.log("The data is: ", data);
     // let x = random(0, width);
     // let y = random(0, height);
-    //console.log("data is: ", data);
+    console.log("data is: ", api_data);
     if (api_data.length > 0) {
         for (let i = 0; i < 10; i++) {
             let col = color(
@@ -73,7 +79,7 @@ function draw() {
             stroke(col);
             fill(col);
             text(
-                api_data[i].name,
+                api_data[0].data[i].name,
                 random(0, width - 50),
                 random(0, height - 50)
             );
@@ -82,19 +88,19 @@ function draw() {
         noLoop();
     }
 
-    let nrOfPoints = 3;
-    let testPointCoord = 70;
-    let p1 = 70;
-    let p2 = 70*1.5;
-    let p3 = 70*2;
-    for (let i = 0; i < nrOfPoints; i++)
-        {
-        stroke(255);
-        point(p1,p2);
-        point(p2,p3);
-        point(p1,p3);
+    // let nrOfPoints = 3;
+    // let testPointCoord = 70;
+    // let p1 = 70;
+    // let p2 = 70*1.5;
+    // let p3 = 70*2;
+    // for (let i = 0; i < nrOfPoints; i++)
+    //     {
+    //     stroke(255);
+    //     point(p1,p2);
+    //     point(p2,p3);
+    //     point(p1,p3);
 
         
-        }
-    noLoop();
+    //     }
+    // noLoop();
 }
