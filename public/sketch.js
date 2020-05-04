@@ -1,6 +1,6 @@
 /* Global Variabels */
 // Server call to Twitter API
-let reddit_data = { children: [] };
+let reddit_data = [];
 let api_data = [];
 
 /*
@@ -29,6 +29,7 @@ console.log("Trying to get data...");
 
 // Custom interface to raw api data
 coinmarketTop10 = [];
+redditNumOfComments = [];
 
 getApiData("coinmarket")
     .then((data) => {
@@ -47,16 +48,29 @@ getApiData("coinmarket")
         console.log("getApiData::Failed to retreive data:", err);
     });
 
-getApiData("reddit?subreddit=bitcoin")
-    .then((data) => {
-        console.log("We got the reddit?subreddit=bitcoin", data);
-        // download(data, 'reddit.json', 'text/plain');
-        reddit_data = data;
+getApiData("reddit/bitcoin")
+    .then((files) => {
+        amountOfCharsInBody = 0;
+        files.forEach(file => {
+            // Extract posts from file
+            file = file.data.children;
+        });
+
+
+
+
+
+
+        // reddit_data = data[0].children;
+        // console.log("current response and reddit_data", data, reddit_data);
+        reddit_data.forEach(posts => {
+            let commentUrl = posts.permalink;
+            //fetch(commentUrl).then(response => response[1].data.children).then( comments => /* Get Date and sort it. */;amountOfCharsInBody += comments.body;);
+            redditNumOfComments.push(posts.data.num_comments);
+        });
     })
     .catch((err) => {
         console.log("Failed to retreive data", err);
-        // if (err.statusCode == xxx) {}
-        // api_data = getDiskData("data/data.json");
     });
 
 
@@ -102,8 +116,9 @@ function draw() {
     //console.log("The data is: ", data);
     // let x = random(0, width);
     // let y = random(0, height);
-    console.log("data is: ", coinmarketTop10);
-    if (coinmarketTop10.length > 0) {
+    if (coinmarketTop10.length > 0 && reddit_data.length > 0) {
+        console.log("data is: ", coinmarketTop10);
+        
         //Variables
         let normFact = coinmarketTop10[0][0].quote.USD.volume_24h;
         let numOfDates = coinmarketTop10.length;
@@ -123,7 +138,28 @@ function draw() {
 
         let names = coinmarketTop10[0].map(a => a.name);
         drawLedger(names, 25, 5);
+        
+        console.log('This is the comments',redditNumOfComments );
+
+        const sumNumOfComments = redditNumOfComments.reduce((a , b) => a + b);
+        console.log(sumNumOfComments);
+        text(sumNumOfComments,width/2, height/2);
+       // graphLayout();
+        let p1 = width;
+        let p2 = height*0.5;
+        stroke(255);
+        line(0, p2, p1, p2);
 
         noLoop();
     }
 }
+
+/*function graphLayout()
+{  
+    let p1 = width;
+    let p2 = height*0.5;
+    stroke(255);
+    line(0, p2, p1, p2);
+}*/
+
+
