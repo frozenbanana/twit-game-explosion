@@ -21,6 +21,7 @@ const getApiData = async (api_url) => {
 
     // It was a promise, but await-ing it turned it into a Response
     const response = await fetch(api_link);
+
     // Returning a promise since it says async (api_type)
     return response.json().then((json) => json.data);
 };
@@ -29,11 +30,11 @@ console.log("Trying to get data...");
 
 // Custom interface to raw api data
 coinmarketTop10 = [];
-redditNumOfComments = [];
+// redditNumOfComments = [];
 
 getApiData("coinmarket")
     .then((data) => {
-        console.log("getApiData::Successfully retreived data:", data);
+        console.log("getApiData::Successfully retreived coinmarket data:", data);
         api_data = data;
 
         api_data.forEach(dataAtTimestamp => {
@@ -48,30 +49,34 @@ getApiData("coinmarket")
         console.log("getApiData::Failed to retreive data:", err);
     });
 
+
 getApiData("reddit/bitcoin")
-    .then((files) => {
+    .then((data) => {
         amountOfCharsInBody = 0;
-        files.forEach(file => {
+        console.log("getApiData::Successfully retreived from reddit/bitcoin data", data);
+        let numOfCommentsEachDay = [];
+        // 1. Binify posts on timestamp (3 hours) coming from coinmarketcap.
+        // 2. For each time slide (3 hours) sum num_comments
+        // 3. When drawing ellipses set radius to depend on sum_of_num_comments
+
+        data.forEach(post => {
             // Extract posts from file
-            file = file.data.children;
+            post = post.num_com;
         });
-
-
-
-
-
 
         // reddit_data = data[0].children;
         // console.log("current response and reddit_data", data, reddit_data);
-        reddit_data.forEach(posts => {
-            let commentUrl = posts.permalink;
-            //fetch(commentUrl).then(response => response[1].data.children).then( comments => /* Get Date and sort it. */;amountOfCharsInBody += comments.body;);
-            redditNumOfComments.push(posts.data.num_comments);
-        });
+        // reddit_data.forEach(posts => {
+        //     let commentUrl = posts.permalink;
+        //     //fetch(commentUrl).then(response => response[1].data.children).then( comments => // Get Date and sort it. //;amountOfCharsInBody += comments.body;);
+        //     redditNumOfComments.push(posts.data.num_comments);
+        // });
     })
     .catch((err) => {
         console.log("Failed to retreive data", err);
     });
+
+
 
 
 //-----GLOBALS-------------------------------------------------------------------------------
@@ -116,7 +121,7 @@ function draw() {
     //console.log("The data is: ", data);
     // let x = random(0, width);
     // let y = random(0, height);
-    if (coinmarketTop10.length > 0 && reddit_data.length > 0) {
+    if (coinmarketTop10.length > 0 /*&& reddit_data.length > 0*/) {
         console.log("data is: ", coinmarketTop10);
         
         //Variables
@@ -139,17 +144,10 @@ function draw() {
         let names = coinmarketTop10[0].map(a => a.name);
         drawLedger(names, 25, 5);
         
-        console.log('This is the comments',redditNumOfComments );
-
-        const sumNumOfComments = redditNumOfComments.reduce((a , b) => a + b);
-        console.log(sumNumOfComments);
-        text(sumNumOfComments,width/2, height/2);
-       // graphLayout();
-        let p1 = width;
-        let p2 = height*0.5;
-        stroke(255);
-        line(0, p2, p1, p2);
-
+        //console.log('This is the comments',redditNumOfComments );
+        //const sumNumOfComments = redditNumOfComments.reduce((a , b) => a + b);
+        //console.log(sumNumOfComments);
+        //text(sumNumOfComments,width/2, height/2);
         noLoop();
     }
 }
