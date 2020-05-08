@@ -87,8 +87,8 @@ readFiles(filePath + 'bitcoincash',      true).then(bucket => redditBucket.bitco
 readFiles(filePath + 'eos',              true).then(bucket => redditBucket.eos = bucket);
 readFiles(filePath + 'ripple',           true).then(bucket => redditBucket.ripple = bucket);
 readFiles(filePath + 'bitcoinsv',        true).then(bucket => redditBucket.bitcoinsv = bucket);
-readFiles(filePath + 'ethereumclassic',  true).then(bucket => redditBucket.etheriumclassic = bucket);
-readFiles(filePath + 'tronix',           true).then(bucket => redditBucket.tronix = bucket);
+readFiles(filePath + 'ethereumclassic',  true).then(bucket => redditBucket.ethereumclassic = bucket);
+readFiles(filePath + 'tronix',           true).then(bucket => redditBucket.tron = bucket);
 
 
 // Set up the server-------------------------------------------------------------------------------

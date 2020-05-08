@@ -30,17 +30,33 @@ console.log("Trying to get data...");
 
 // Custom interface to raw api data
 coinmarketTop10 = [];
-// redditNumOfComments = [];
-
 getApiData("coinmarket")
     .then((data) => {
         console.log("getApiData::Successfully retreived coinmarket data:", data);
         api_data = data;
 
         api_data.forEach(dataAtTimestamp => {
-            coinmarketTop10.push(dataAtTimestamp.data.slice(0, 10));
-        });
+            let top10 = dataAtTimestamp.data.slice(0, 10);
+            
+            let coins = [];
+            for (let i = 0; i < top10.length; i++) {
+                // Interface
+                coinObj = {
+                    name: null,
+                    volume_24h: null,
+                    timestamp: null,
+                    comments_in_interval: 0
+                };
 
+                coinObj.name = top10[i].name;    
+                coinObj.volume_24h = top10[i].quote.USD.volume_24h;    
+                coinObj.timestamp = new Date(top10[i].last_updated).getTime() / 1000;
+                coins.push(coinObj);
+            }
+
+            coinmarketTop10.push(coins);
+        });
+        
         // coinmarketTop10[0].quote.volume_24h
         // coinmarketTop10[0][0].quote.USD.volume_24h
         //normalizeData(api_data); // TODO
@@ -49,35 +65,48 @@ getApiData("coinmarket")
         console.log("getApiData::Failed to retreive data:", err);
     });
 
+//-----
 
-getApiData("reddit/bitcoin")
+let redditPosts = {    
+    tether:             [],
+    bitcoin:            [],
+    ethereum:           [],
+    litecoin:           [],
+    bitcoincash:        [],
+    eos:                [],
+    ripple:             [],
+    bitcoinsv:          [],
+    ethereumclassic:    [],
+    tron:               [],
+};
+
+getApiData("reddit/")
     .then((data) => {
-        amountOfCharsInBody = 0;
-        console.log("getApiData::Successfully retreived from reddit/bitcoin data", data);
-        let numOfCommentsEachDay = [];
-        // 1. Binify posts on timestamp (3 hours) coming from coinmarketcap.
-        // 2. For each time slide (3 hours) sum num_comments
-        // 3. When drawing ellipses set radius to depend on sum_of_num_comments
+        console.log("getApiData::Successfully retreived from reddit data", data);
 
-        data.forEach(post => {
-            // Extract posts from file
-            post = post.num_com;
-        });
+        //Go through the different currencies
 
-        // reddit_data = data[0].children;
-        // console.log("current response and reddit_data", data, reddit_data);
-        // reddit_data.forEach(posts => {
-        //     let commentUrl = posts.permalink;
-        //     //fetch(commentUrl).then(response => response[1].data.children).then( comments => // Get Date and sort it. //;amountOfCharsInBody += comments.body;);
-        //     redditNumOfComments.push(posts.data.num_comments);
-        // });
+        let coinKeys = Object.keys(data);
+        
+        for(let i = 0; i < coinKeys.length; i++) {
+            const currentCoin = data[coinKeys[i]];
+            for(let date_index = 0; date_index < currentCoin.length; date_index++) {
+                let postObj = {
+                    timestamp: null,
+                    num_comments: null
+                };
+                postObj.timestamp = currentCoin[date_index].created_utc;
+                postObj.num_comments = currentCoin[date_index].num_comments;
+                redditPosts[coinKeys[i]].push(postObj);
+            }
+        }
+    
+        console.log("Filtered reddit data: ", redditPosts); 
+
     })
     .catch((err) => {
         console.log("Failed to retreive data", err);
     });
-
-
-
 
 //-----GLOBALS-------------------------------------------------------------------------------
 
@@ -118,37 +147,95 @@ function setup() {
 }
 
 function draw() {
-    //console.log("The data is: ", data);
+    console.log("draw() called. ");
     // let x = random(0, width);
     // let y = random(0, height);
-    if (coinmarketTop10.length > 0 /*&& reddit_data.length > 0*/) {
-        console.log("data is: ", coinmarketTop10);
-        
-        //Variables
-        let normFact = coinmarketTop10[0][0].quote.USD.volume_24h;
-        let numOfDates = coinmarketTop10.length;
+    if (coinmarketTop10.length > 0 && redditPosts['bitcoin'].length > 0) {
+        console.log(`We got data. coinmarket: ${coinmarketTop10.length}, reddit: ${Object.keys(redditPosts).length}`);
 
-        for (let i = 0; i < numOfDates; i++) {
+        console.log('Before trim: ', coinmarketTop10, redditPosts);
 
-            let x = baseX + i * (topWidth / numOfDates);
-            for (let j = 0; j < coinmarketTop10[i].length; j++) {
-                let y = height - baseY - (coinmarketTop10[i][j].quote.USD.volume_24h / normFact) * topHeight;
-                stroke(colors[j]);
-                fill(colors[j]);
-                ellipse(x, y, 20);
+        /*
+        coinmarketTop10:  [dates][currency] {
+            .name
+            .volume_24h
+            .timestamp
+            .comments_in_interval
+        }
+        */
+        /*
+        redditPosts:      [currency][post] {
+            .timestamp
+            .num_comments
+        }
+        */
+
+        //For all dates
+        for(let date_index = 0; date_index < coinmarketTop10.length; date_index++) {
+            
+            //For each currency
+            for(let currency_index = 0; currency_index < coinmarketTop10[date_index].length; currency_index++){
+                //Read reddit comments that happened before current date
+                //Once current date is reached, stop and move to next date
+                let date_iter = 0;
+                let curr_key = Object.keys(redditPosts)[currency_index];
+                //console.log('first', redditPosts[curr_key]); // 1.    = data
+                console.log('first', redditPosts[curr_key].length); //2 = 0
+                while(redditPosts[curr_key][date_iter] && 
+                    redditPosts[curr_key][date_iter].timestamp < coinmarketTop10[date_index][currency_index].timestamp) {
+                    // console.log(`date_iter: ${date_iter}, redditPosts[curr_key][date_iter]: ${redditPosts[curr_key][date_iter]}, timestamptoCompare: ${coinmarketTop10[date_index][currency_index].timestamp}`);
+                    
+                    coinmarketTop10[date_index][currency_index].comments_in_interval += redditPosts[curr_key][date_iter].num_comments;
+                    date_iter++;
+                }
             }
-
-
         }
 
+        console.log('Trim result: ', coinmarketTop10);
+        
+
+        // coinmarketTop10.forEach(coins => {
+        //         console.log('result', coins[1].comments_in_interval);
+        // });
+
+        //Variables
+        
+
+        /////
+
+        let normFact = coinmarketTop10[1].reduce(function(prev, current) {
+            return (prev.volume_24h > current.volume_24h) ? prev.volume_24h : current.volume_24h
+        });
+        console.log('normFact unfix', normFact);
+        
+        
+        
+        normFact = coinmarketTop10[0][0].volume_24h;        //<-TODO: Takes highest value of top currency at first timestamp,
+        console.log('normFact fixed', normFact);             //should take highest value of top currency at the timestamp it was highest
+
+        /////
+        
+        
+        let numOfDates = coinmarketTop10.length;
+
+        //Balls
+        for (let date_index = 0; date_index < numOfDates; date_index++) {
+
+            let x = baseX + date_index * (topWidth / numOfDates);
+            
+            for (let currency_index = 0; currency_index < coinmarketTop10[date_index].length; currency_index++) {
+                let y = height - baseY - (coinmarketTop10[date_index][currency_index].volume_24h / normFact) * topHeight;
+                stroke(color('black'));
+                fill(colors[currency_index]);
+                ellipse(x, y, (10 + (coinmarketTop10[date_index][currency_index].comments_in_interval * 0.025)));
+            }
+        }
+
+        //Names
         let names = coinmarketTop10[0].map(a => a.name);
         drawLedger(names, 25, 5);
         
-        //console.log('This is the comments',redditNumOfComments );
-        //const sumNumOfComments = redditNumOfComments.reduce((a , b) => a + b);
-        //console.log(sumNumOfComments);
-        //text(sumNumOfComments,width/2, height/2);
-        noLoop();
+        noLoop();   
     }
 }
 
