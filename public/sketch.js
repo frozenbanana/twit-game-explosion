@@ -115,6 +115,21 @@ let baseY;
 let topWidth;
 let topHeight;
 
+/*
+coinmarketTop10:  [dates][currency] {
+                    .name
+                    .volume_24h
+                    .timestamp
+                    .comments_in_interval
+                    }
+*/
+/*
+redditPosts:      [currency][post] {
+                    .timestamp
+                    .num_comments
+                    }
+*/
+
 //-----HELPER FUNCTIONS ----------------------------------------------------------------------
 
 drawLedger = (names, posx, posy) => {
@@ -153,23 +168,7 @@ function draw() {
     if (coinmarketTop10.length > 0 && redditPosts['bitcoin'].length > 0) {
         console.log(`We got data. coinmarket: ${coinmarketTop10.length}, reddit: ${Object.keys(redditPosts).length}`);
 
-        console.log('Before trim: ', coinmarketTop10, redditPosts);
-
-        /*
-        coinmarketTop10:  [dates][currency] {
-            .name
-            .volume_24h
-            .timestamp
-            .comments_in_interval
-        }
-        */
-        /*
-        redditPosts:      [currency][post] {
-            .timestamp
-            .num_comments
-        }
-        */
-
+        //COUNT COMMENTS IN INTERVALS
         //For all dates
         for(let date_index = 0; date_index < coinmarketTop10.length; date_index++) {
             
@@ -179,8 +178,6 @@ function draw() {
                 //Once current date is reached, stop and move to next date
                 let date_iter = 0;
                 let curr_key = Object.keys(redditPosts)[currency_index];
-                //console.log('first', redditPosts[curr_key]); // 1.    = data
-                console.log('first', redditPosts[curr_key].length); //2 = 0
                 while(redditPosts[curr_key][date_iter] && 
                     redditPosts[curr_key][date_iter].timestamp < coinmarketTop10[date_index][currency_index].timestamp) {
                     // console.log(`date_iter: ${date_iter}, redditPosts[curr_key][date_iter]: ${redditPosts[curr_key][date_iter]}, timestamptoCompare: ${coinmarketTop10[date_index][currency_index].timestamp}`);
@@ -190,30 +187,22 @@ function draw() {
                 }
             }
         }
-
-        console.log('Trim result: ', coinmarketTop10);
         
 
-        // coinmarketTop10.forEach(coins => {
-        //         console.log('result', coins[1].comments_in_interval);
-        // });
+        //FIND MAX VALUE FOR FORMATTING
+        //normFact = coinmarketTop10[0][0].volume_24h;      //<-TODO: Takes highest value of top currency at first timestamp,
+                                                            //should take highest value of top currency at the timestamp it was highest
 
-        //Variables
-        
-
-        /////
-
-        let normFact = coinmarketTop10[1].reduce(function(prev, current) {
-            return (prev.volume_24h > current.volume_24h) ? prev.volume_24h : current.volume_24h
-        });
-        console.log('normFact unfix', normFact);
-        
-        
-        
-        normFact = coinmarketTop10[0][0].volume_24h;        //<-TODO: Takes highest value of top currency at first timestamp,
-        console.log('normFact fixed', normFact);             //should take highest value of top currency at the timestamp it was highest
-
-        /////
+        let max_val = 0;
+        for(let i = 0; i < coinmarketTop10.length; i++){
+            for(let k = 0; k < coinmarketTop10[i].length; k++){
+                if(max_val < coinmarketTop10[i][k].volume_24){
+                    max_val = coinmarketTop10[i][k].volume_24;
+                }
+            }
+        }
+        console.log('New NormFact Try', max_val); 
+        letnormFact = max_val;
         
         
         let numOfDates = coinmarketTop10.length;
