@@ -195,14 +195,14 @@ function draw() {
 
         let max_val = 0;
         for(let i = 0; i < coinmarketTop10.length; i++){
-            for(let k = 0; k < coinmarketTop10[i].length; k++){
+            for(let k = 0; k < 2; k++){ //Only consider the top 2 currencies
                 if(max_val < coinmarketTop10[i][k].volume_24){
                     max_val = coinmarketTop10[i][k].volume_24;
                 }
             }
         }
         console.log('New NormFact Try', max_val); 
-        letnormFact = max_val;
+        let normFact = max_val;
         
         
         let numOfDates = coinmarketTop10.length;
