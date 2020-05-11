@@ -99,7 +99,7 @@ readFiles(filePath + 'tronix',           true).then(bucket => redditBucket.tron 
 
 // Set up the server-------------------------------------------------------------------------------
 // process.env.PORT is related to deploying on heroku
-const server = app.listen(process.env.PORT || 3000, listen);
+const server = app.listen(process.env.PORT || 3001, listen);
 
 // This call back just tells us that the server has started
 function listen() {

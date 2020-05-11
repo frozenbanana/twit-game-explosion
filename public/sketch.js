@@ -169,12 +169,14 @@ function draw() {
 
         //COUNT COMMENTS IN INTERVALS
         //For all dates
+
         for(let date_index = 0; date_index < coinmarketTop10.length; date_index++) {
             
             //For each currency
             for(let currency_index = 0; currency_index < coinmarketTop10[date_index].length; currency_index++){
                 //Read reddit comments that happened before current date
                 //Once current date is reached, stop and move to next date
+                let timeStamp_Registered_Comments;
                 let date_iter = 0;
                 let curr_key = Object.keys(redditPosts)[currency_index];
                 while(redditPosts[curr_key][date_iter] && 
@@ -187,6 +189,7 @@ function draw() {
             }
         }
         
+       
 
         //FIND MAX VALUE FOR FORMATTING
         let max_val = 0;
@@ -213,7 +216,7 @@ function draw() {
                 fill(colors[currency_index]);
                 //ellipse(x, y, (10 + (coinmarketTop10[date_index][currency_index].comments_in_interval * 0.025)));
                 let rect_size = 10 + (coinmarketTop10[date_index][currency_index].comments_in_interval * 0.025);
-                rect(x, y, 10, rect_size);
+                rect(x, y, 10, 10);
             }
         }
 

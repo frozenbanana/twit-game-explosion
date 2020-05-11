@@ -21,7 +21,7 @@ getApiData("coinmarket")
         api_data = data;
 
         api_data.forEach(dataAtTimestamp => {
-            let top10 = dataAtTimestamp.data.slice(0, 10); //NTS, cut top 3
+            let top10 = dataAtTimestamp.data.slice(0, 10);
             
             let coins = [];
             for (let i = 0; i < top10.length; i++) {
@@ -43,7 +43,7 @@ getApiData("coinmarket")
 
             coinmarketTop10.push(coins);
         });
-        
+
     })
     .catch((err) => {
         console.log("getApiData::Failed to retreive data:", err);
@@ -146,7 +146,7 @@ function draw() {
     console.log("draw() called. ");
     
     
-    if (coinmarketTop10.length > 0 && redditPosts['bitcoin'].length > 0) {
+    if (coinmarketTop10.length > 0) {
         console.log(`We got data. coinmarket: ${coinmarketTop10.length}, reddit: ${Object.keys(redditPosts).length}`);
 
         /*
@@ -172,29 +172,36 @@ function draw() {
         */
 
         //FIND MAX AND MIN VALUE FOR FORMATTING
+        /*
         let max_val = 0;
         for(let i = 0; i < coinmarketTop10.length; i++){
-            for(let k = 0; k < 2; k++){ //Only consider the top 2 currencies
+            for(let k = 0; k < coinmarketTop10[i].length; k++){
                 if(max_val < Math.abs(coinmarketTop10[i][k].percent_change_24h)){
                     max_val = Math.abs(coinmarketTop10[i][k].percent_change_24h);
                 }
             }
         }
-        let normFact = max_val;        
-        let numOfDates = coinmarketTop10.length;
 
+        console.log('max', max_val);
+        let normFact = max_val; 
+        */
+       
         //Balls
+        let numOfDates = coinmarketTop10.length;
+        let numOfCurrencies = coinmarketTop10[0].length;
         for (let date_index = 0; date_index < numOfDates; date_index++) {
 
             let x = baseX + date_index * (topWidth / numOfDates);
             
             for (let currency_index = 0; currency_index < coinmarketTop10[date_index].length; currency_index++) {
                 //let y = height - baseY - (coinmarketTop10[date_index][currency_index].volume_24h / normFact) * topHeight;
-                let y = height - baseY - (coinmarketTop10[date_index][currency_index].percent_change_24h / normFact) * (topHeight/2);
-                
+                //let y = height - baseY - (coinmarketTop10[date_index][currency_index].percent_change_24h / normFact) * (topHeight/2);
+                let y = (baseY + currency_index * (topHeight / numOfCurrencies));
+
                 stroke(color('black'));
                 fill(colors[currency_index]);
-                ellipse(x, y, 10);
+                //ellipse(x, y, 5);
+                rect(x, y, 10, -coinmarketTop10[date_index][currency_index].percent_change_24h * 10); //minus(-) because everything is inverted on canvas
             }
         }
 
