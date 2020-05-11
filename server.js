@@ -17,14 +17,16 @@ const readFiles = async (path, isDirty) => {
                 if (err) throw err;
                 //console.log('Reading file from ', path,': ', idx++);
                 
-                // console.log('content:', content);  // get content of files
+                // if (path === 'data/coinmarketcap')
+                //     console.log('content:', content);  // get content of files
+
                 bucket.push(JSON.parse(content));
                 next();
             },
             function(err, files){ // <- final call
                 if (err) throw reject(err);
 
-                if (isDirty) bucket = cleanRedditData(bucket);
+                if (isDirty) bucket = cleanRedditData(bucket, path.substring(path.indexOf('/')+1));
                 
                 resolve(bucket);
             }
@@ -43,7 +45,7 @@ const containsObjectByKey = (array, obj, key) => {
     return false; // obj is not present in array
 }
 
-function cleanRedditData(subredditfiles) {
+function cleanRedditData(subredditfiles, coinName) {
     let uniquePosts = [];
     let cleanedCounter = 0;
     subredditfiles.forEach(file => {
@@ -58,12 +60,16 @@ function cleanRedditData(subredditfiles) {
         })
     });
     let totalPosts = subredditfiles.map(file => file.data.children.length).reduce( (tot, cur) => tot+cur, 0);
-    console.log('Number of unique posts', uniquePosts.length, 'of', totalPosts);
+    uniquePosts.sort((a, b) => {return a.created_utc - b.created_utc});
+    console.log(`Successfully loaded \x1b[36m${coinName}\x1b[0m with \x1b[32m${uniquePosts.length}\x1b[0m unique of \x1b[33m${totalPosts}\x1b[0m post total.`);
     return uniquePosts; 
 }
 
 let coinmarketBucket = {};
-readFiles('data/coinmarketcap', false).then(bucket => { coinmarketBucket = bucket; });
+readFiles('data/coinmarketcap', false).then(bucket => { 
+    console.log(`Successfully loaded \x1b[36mcoinmarketcap\x1b[0m with \x1b[32m${bucket.length}\x1b[0m unique of \x1b[32m${bucket.length}\x1b[0m post total.`);
+    coinmarketBucket = bucket; 
+});
 
 const filePath = 'data/reddit/';
 let redditBucket = {    
@@ -79,16 +85,16 @@ let redditBucket = {
     tron:               {},
 };
 // Read async data from files
-readFiles(filePath + 'tether',           true).then(bucket => redditBucket.tether = bucket);
-readFiles(filePath + 'bitcoin',          true).then(bucket => redditBucket.bitcoin = bucket);
-readFiles(filePath + 'ethereum',         true).then(bucket => redditBucket.ethereum = bucket);
-readFiles(filePath + 'litecoin',         true).then(bucket => redditBucket.litecoin = bucket);
-readFiles(filePath + 'bitcoincash',      true).then(bucket => redditBucket.bitcoincash = bucket);
-readFiles(filePath + 'eos',              true).then(bucket => redditBucket.eos = bucket);
-readFiles(filePath + 'ripple',           true).then(bucket => redditBucket.ripple = bucket);
-readFiles(filePath + 'bitcoinsv',        true).then(bucket => redditBucket.bitcoinsv = bucket);
-readFiles(filePath + 'ethereumclassic',  true).then(bucket => redditBucket.ethereumclassic = bucket);
-readFiles(filePath + 'tronix',           true).then(bucket => redditBucket.tron = bucket);
+readFiles(filePath + 'tether',           true).then(bucket => redditBucket.tether           = bucket);
+readFiles(filePath + 'bitcoin',          true).then(bucket => redditBucket.bitcoin          = bucket);
+readFiles(filePath + 'ethereum',         true).then(bucket => redditBucket.ethereum         = bucket);
+readFiles(filePath + 'litecoin',         true).then(bucket => redditBucket.litecoin         = bucket);
+readFiles(filePath + 'bitcoincash',      true).then(bucket => redditBucket.bitcoincash      = bucket);
+readFiles(filePath + 'eos',              true).then(bucket => redditBucket.eos              = bucket);
+readFiles(filePath + 'ripple',           true).then(bucket => redditBucket.ripple           = bucket);
+readFiles(filePath + 'bitcoinsv',        true).then(bucket => redditBucket.bitcoinsv        = bucket);
+readFiles(filePath + 'ethereumclassic',  true).then(bucket => redditBucket.ethereumclassic  = bucket);
+readFiles(filePath + 'tronix',           true).then(bucket => redditBucket.tron             = bucket);
 
 
 // Set up the server-------------------------------------------------------------------------------

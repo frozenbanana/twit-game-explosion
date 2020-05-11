@@ -57,9 +57,6 @@ getApiData("coinmarket")
             coinmarketTop10.push(coins);
         });
         
-        // coinmarketTop10[0].quote.volume_24h
-        // coinmarketTop10[0][0].quote.USD.volume_24h
-        //normalizeData(api_data); // TODO
     })
     .catch((err) => {
         console.log("getApiData::Failed to retreive data:", err);
@@ -165,6 +162,8 @@ function draw() {
     console.log("draw() called. ");
     // let x = random(0, width);
     // let y = random(0, height);
+    
+
     if (coinmarketTop10.length > 0 && redditPosts['bitcoin'].length > 0) {
         console.log(`We got data. coinmarket: ${coinmarketTop10.length}, reddit: ${Object.keys(redditPosts).length}`);
 
@@ -190,21 +189,17 @@ function draw() {
         
 
         //FIND MAX VALUE FOR FORMATTING
-        //normFact = coinmarketTop10[0][0].volume_24h;      //<-TODO: Takes highest value of top currency at first timestamp,
-                                                            //should take highest value of top currency at the timestamp it was highest
-
         let max_val = 0;
         for(let i = 0; i < coinmarketTop10.length; i++){
             for(let k = 0; k < 2; k++){ //Only consider the top 2 currencies
-                if(max_val < coinmarketTop10[i][k].volume_24){
-                    max_val = coinmarketTop10[i][k].volume_24;
+                if(max_val < coinmarketTop10[i][k].volume_24h){
+                    max_val = coinmarketTop10[i][k].volume_24h;
                 }
             }
         }
-        console.log('New NormFact Try', max_val); 
+
+        console.log('New NormFact', max_val); 
         let normFact = max_val;
-        
-        
         let numOfDates = coinmarketTop10.length;
 
         //Balls
@@ -216,7 +211,9 @@ function draw() {
                 let y = height - baseY - (coinmarketTop10[date_index][currency_index].volume_24h / normFact) * topHeight;
                 stroke(color('black'));
                 fill(colors[currency_index]);
-                ellipse(x, y, (10 + (coinmarketTop10[date_index][currency_index].comments_in_interval * 0.025)));
+                //ellipse(x, y, (10 + (coinmarketTop10[date_index][currency_index].comments_in_interval * 0.025)));
+                let rect_size = 10 + (coinmarketTop10[date_index][currency_index].comments_in_interval * 0.025);
+                rect(x, y, 10, rect_size);
             }
         }
 
@@ -235,5 +232,3 @@ function draw() {
     stroke(255);
     line(0, p2, p1, p2);
 }*/
-
-
