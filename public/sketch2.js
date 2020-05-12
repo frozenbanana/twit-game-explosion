@@ -113,33 +113,67 @@ redditPosts:      [currency][post] {
 
 //-----HELPER FUNCTIONS ----------------------------------------------------------------------
 
-drawLedger = (names, posx, posy) => {
+calcColour = (activity, avg_activity) => {
+    colorMode(HSB);
+
+    //  ->  sat increases with higher than average activity
+    //  ->  brightness decreases with lower than average activity
+    
+    percent_change = (activity/avg_activity - 1.0) * 100;
+
+    let sat = (percent_change > 0) ? percent_change : 0;
+    let bri = (percent_change < 0) ? percent_change : 0;
+
+    return color(0, sat, 100-bri)
+}
+
+drawGraphLegend = (name, max_change, bar_mod, pos_x, pos_y) => {
     noFill();
-    rect(posx, posy, 100, names.length * 15 + 20);
     stroke(color('white'));
-    for (let i = 0; i < names.length; i++) {
-        stroke(colors[i]);
-        fill(colors[i]);
-        text(names[i], posx+5, 20 + i * 15);
+    
+    //Place out scale
+    let scale_length = 2*max_change*bar_mod;
+    rect(pos_x - 10, pos_y - (scale_length/2), 1, scale_length);
+
+    //Place out text
+    text(name, pos_x - 10, pos_y + (scale_length/2) + 15);
+
+    for(let i = max_change; i >= -max_change; i=i-10) {
+        let text_s = i.toString() + "%";
+        let text_x = pos_x - 40;
+        let text_y = pos_y + i*bar_mod;
+        text(text_s, text_x, text_y);
     }
+
 };
 
+drawGradientLegend = (posx, posy) => {
+    //Background
+    fill(color('white'));
+    stroke(color('white'));
+    rect(posx, posy, 200, 100);
+
+    //Gradent Rectangle     //TODO Next: https://p5js.org/examples/color-linear-gradient.html
+    fill(color('white'));
+    stroke(color('black'));
+    rect(posx+10, posy+10, 180, 40);
+
+    //Text
+};
 
 function setup() {
-    createCanvas(1280, 800);
+    let width = 1280;
+    let height = 2800;
+    createCanvas(width, height);
     background(0);
     textSize(10);
-    colorMode(HSB);
-    colors = [];
-    for (let i = 0; i < 10; i++) {
-        colors.push(color(i * 25, 50, 150));
-    }
+    
 
     // Assignment of global variables
-    baseX = 150;
-    baseY = 50;
+    baseX = 50;
+    baseY = 175;
     topWidth = width - 2 * baseX;
-    topHeight = height - 2 * baseY;
+    topHeight = height - 1 * baseY;
 }
 
 function draw() {
@@ -171,43 +205,53 @@ function draw() {
         }
         */
 
-        //FIND MAX AND MIN VALUE FOR FORMATTING
-        /*
-        let max_val = 0;
+        //FIND THE LARGEST CHANGE IN VALUE
+        let max_change = 0;
         for(let i = 0; i < coinmarketTop10.length; i++){
             for(let k = 0; k < coinmarketTop10[i].length; k++){
-                if(max_val < Math.abs(coinmarketTop10[i][k].percent_change_24h)){
-                    max_val = Math.abs(coinmarketTop10[i][k].percent_change_24h);
+                if(max_change < Math.abs(coinmarketTop10[i][k].percent_change_24h)){
+                    max_change = Math.abs(coinmarketTop10[i][k].percent_change_24h);
                 }
             }
         }
 
-        console.log('max', max_val);
-        let normFact = max_val; 
-        */
+        console.log('max', max_change);
        
-        //Balls
-        let numOfDates = coinmarketTop10.length;
-        let numOfCurrencies = coinmarketTop10[0].length;
-        for (let date_index = 0; date_index < numOfDates; date_index++) {
+        //DRAW DIAGRAMS
+        let num_of_dates = coinmarketTop10.length;
+        let num_of_currencies = coinmarketTop10[0].length;
+        max_change = Math.ceil(max_change/10)*10;   //round up to closest 10
+        let bar_mod = 5;
+        
+        //Currency graphs
+        for (let currency_index = 0; currency_index < num_of_currencies; currency_index++) {
+            let y = (baseY + currency_index * (topHeight / num_of_currencies));
 
-            let x = baseX + date_index * (topWidth / numOfDates);
-            
-            for (let currency_index = 0; currency_index < coinmarketTop10[date_index].length; currency_index++) {
-                //let y = height - baseY - (coinmarketTop10[date_index][currency_index].volume_24h / normFact) * topHeight;
-                //let y = height - baseY - (coinmarketTop10[date_index][currency_index].percent_change_24h / normFact) * (topHeight/2);
-                let y = (baseY + currency_index * (topHeight / numOfCurrencies));
+            //Bars
+            for (let date_index = 0; date_index < num_of_dates; date_index++) {
+                let x = baseX + date_index * (topWidth / num_of_dates);
 
                 stroke(color('black'));
-                fill(colors[currency_index]);
+                fill(calcColour(100, 10));
                 //ellipse(x, y, 5);
-                rect(x, y, 10, -coinmarketTop10[date_index][currency_index].percent_change_24h * 10); //minus(-) because everything is inverted on canvas
+                let bar_length = -coinmarketTop10[date_index][currency_index].percent_change_24h;   //minus(-) because everything is inverted on canvas
+                bar_length = (bar_length/max_change) * (max_change*bar_mod);
+                rect(x, y, 10, bar_length);
             }
+
+            drawGraphLegend(
+                coinmarketTop10[0][currency_index].name,
+                max_change, 
+                bar_mod, 
+                baseX, 
+                y
+            );
+            drawGradientLegend(1000, 20);
         }
 
-        //Names
-        let names = coinmarketTop10[0].map(a => a.name);
-        drawLedger(names, 25, 5);
+        //Title
+        textSize(20);
+        text("Percentual change in\nvalue during 24 hours", (topWidth/2)-baseX, 25);
         
         noLoop();   
     }
