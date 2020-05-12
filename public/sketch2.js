@@ -154,6 +154,7 @@ drawGradientLegend = (posx, posy) => {
     rect(posx, posy, 200, 100);
 
     //Gradent Rectangle     //TODO Next: https://p5js.org/examples/color-linear-gradient.html
+                            //Also: Change title to only be about %, add time axis to graph ledger
     fill(color('white'));
     stroke(color('black'));
     rect(posx+10, posy+10, 180, 40);
