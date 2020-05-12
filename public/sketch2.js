@@ -117,14 +117,15 @@ calcColour = (activity, avg_activity) => {
     colorMode(HSB);
 
     //  ->  sat increases with higher than average activity
-    //  ->  brightness decreases with lower than average activity
+    //  ->  sat decreases with lower than average activity
     
     percent_change = (activity/avg_activity - 1.0) * 100;
 
-    let sat = (percent_change > 0) ? percent_change : 0;
-    let bri = (percent_change < 0) ? percent_change : 0;
+    let sat = 50 + (percent_change/2);
 
-    return color(0, sat, 100-bri)
+    //  ->  sat = 50 is average
+
+    return color(0, sat, 100)
 }
 
 drawGraphLegend = (name, max_change, bar_mod, pos_x, pos_y) => {
@@ -147,19 +148,50 @@ drawGraphLegend = (name, max_change, bar_mod, pos_x, pos_y) => {
 
 };
 
-drawGradientLegend = (posx, posy) => {
+function drawGradient(pos_x, pos_y, in_width, in_height, colour_a, colour_b) {
+    noFill();
+    // Left to right gradient
+    for (let i = pos_x; i <= pos_x + in_width; i++) {
+      let inter = map(i, pos_x, pos_x + in_width, 0, 1);
+      let c = lerpColor(colour_a, colour_b, inter);
+      stroke(c);
+      line(i, pos_y, i, pos_y + in_height);
+    }
+}
+
+drawGradientLegend = (pos_x, pos_y) => {
     //Background
     fill(color('white'));
     stroke(color('white'));
-    rect(posx, posy, 200, 100);
+    rect(pos_x, pos_y, 200, 100);
 
-    //Gradent Rectangle     //TODO Next: https://p5js.org/examples/color-linear-gradient.html
-                            //Also: Change title to only be about %, add time axis to graph ledger
-    fill(color('white'));
+    //Gradent Rectangle     //TODO: Change title to only be about %, add time axis to graph ledger
+    
+    let pos_x2 = pos_x+15;
+    let pos_y2 = pos_y+20;
+
+    drawGradient(pos_x2, pos_y2, 180, 40, calcColour(0, 1), calcColour(10, 1),);
     stroke(color('black'));
-    rect(posx+10, posy+10, 180, 40);
+    noFill();
+    rect(pos_x2, pos_y2, 180, 40);
+
+    //help lines
+    rect(pos_x2+0, pos_y2+30, 1, 20);
+    rect(pos_x2+90,pos_y2+30, 1, 20);
+    rect(pos_x2+180, pos_y2+30, 1, 20);
 
     //Text
+    fill(color('black'));
+    stroke(color('black'));
+
+    textSize(15);
+    text("Comment Activity", pos_x2, pos_y2-5);
+
+    textSize(10);
+    text("100%\nDecrease", pos_x2, pos_y2+65);
+    text("Average\nActivity", pos_x2+75, pos_y2+65);
+    text("100%\nIncrease", pos_x2+145, pos_y2+65);
+    
 };
 
 function setup() {
@@ -247,12 +279,19 @@ function draw() {
                 baseX, 
                 y
             );
-            drawGradientLegend(1000, 20);
+            
         }
 
         //Title
         textSize(20);
+        stroke(color('white'));
+        fill(color('white'));
         text("Percentual change in\nvalue during 24 hours", (topWidth/2)-baseX, 25);
+
+        //TODO: Change title to only be about %, add time axis to graph legend
+
+        //Gradient legend
+        drawGradientLegend(1000, 20);
         
         noLoop();   
     }
