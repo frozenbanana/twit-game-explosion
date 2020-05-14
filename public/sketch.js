@@ -45,7 +45,8 @@ getApiData("coinmarket")
                     name: null,
                     volume_24h: null,
                     timestamp: null,
-                    comments_in_interval: 0
+                    comments_in_interval: 0,
+                    current_date_reached: 0
                 };
 
                 coinObj.name = top10[i].name;    
@@ -118,6 +119,7 @@ coinmarketTop10:  [dates][currency] {
                     .volume_24h
                     .timestamp
                     .comments_in_interval
+                    .current_date_reached
                     }
 */
 /*
@@ -170,7 +172,7 @@ function draw() {
         //COUNT COMMENTS IN INTERVALS
         //For all dates
 
-        for(let date_index = 0; date_index < coinmarketTop10.length; date_index++) {
+        /*for(let date_index = 0; date_index < coinmarketTop10.length; date_index++) {
             
             //For each currency
             for(let currency_index = 0; currency_index < coinmarketTop10[date_index].length; currency_index++){
@@ -186,6 +188,31 @@ function draw() {
                     coinmarketTop10[date_index][currency_index].comments_in_interval += redditPosts[curr_key][date_iter].num_comments;
                     date_iter++;
                 }
+            }
+        }*/
+
+        
+        
+        for(let date_index = 0; date_index < coinmarketTop10.length; date_index++) {
+            
+            //For each currency
+            for(let currency_index = 0; currency_index < coinmarketTop10[date_index].length; currency_index++){
+                //Read reddit comments that happened before current date
+                //Once current date is reached, stop and move to next date
+                let timeStamp_Registered_Comments;
+                let curr_key = Object.keys(redditPosts)[currency_index];
+                let date_iter = 0;
+                date_iter = 0;
+                
+                while(redditPosts[curr_key][date_iter] && 
+                    redditPosts[curr_key][date_iter].timestamp < coinmarketTop10[date_index][currency_index].timestamp) {
+                    // console.log(`date_iter: ${date_iter}, redditPosts[curr_key][date_iter]: ${redditPosts[curr_key][date_iter]}, timestamptoCompare: ${coinmarketTop10[date_index][currency_index].timestamp}`);
+                    
+                    coinmarketTop10[date_index][currency_index].comments_in_interval += redditPosts[curr_key][date_iter].num_comments;                    
+                    date_iter++;
+                }
+                coinmarketTop10[date_index][currency_index].current_date_reached = date_iter;
+                console.log("Date & Current Key", curr_key, date_index, coinmarketTop10[date_index][currency_index].current_date_reached);
             }
         }
         
@@ -216,7 +243,7 @@ function draw() {
                 fill(colors[currency_index]);
                 //ellipse(x, y, (10 + (coinmarketTop10[date_index][currency_index].comments_in_interval * 0.025)));
                 let rect_size = 10 + (coinmarketTop10[date_index][currency_index].comments_in_interval * 0.025);
-                rect(x, y, 10, 10);
+                rect(x, y, 10, rect_size);
             }
         }
 

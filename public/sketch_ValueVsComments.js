@@ -1,3 +1,4 @@
+
 /* Global Variabels */
 console.log("Running sketch2.js");
 
@@ -19,24 +20,33 @@ getApiData("coinmarket")
     .then((data) => {
         console.log("getApiData::Successfully retreived coinmarket data:", data);
         api_data = data;
-
+        
+        // Used for Y-axis max height
+        for ( let i = 0; i < 10; i++) {
+            prices_references.push(api_data[0].data.slice(0, 10)[i].quote.USD.price * 2);
+        }
+        
+        console.log('price references: ',prices_references);
         api_data.forEach(dataAtTimestamp => {
             let top10 = dataAtTimestamp.data.slice(0, 10);
             
             let coins = [];
+            
             for (let i = 0; i < top10.length; i++) {
                 // Interface
                 coinObj = {
                     name: null,
-                    //volume_24h: null,
+                    price: null,
+                    price_reference: null,
                     percent_change_24h: null,
                     timestamp: null,
                     comments_in_interval: 0
                 };
 
                 coinObj.name = top10[i].name;    
-                //coinObj.volume_24h = top10[i].quote.USD.volume_24h;    
-                coinObj.percent_change_24h = top10[i].quote.USD.percent_change_24h;  
+                coinObj.price = top10[i].quote.USD.price;
+                coinObj.price_reference = prices_references[i];
+                coinObj.percent_change_24h = top10[i].quote.USD.percent_change_24h;
                 coinObj.timestamp = new Date(top10[i].last_updated).getTime() / 1000;
                 coins.push(coinObj);
             }
@@ -128,7 +138,7 @@ calcColour = (activity, avg_activity) => {
     return color(0, sat, 100)
 }
 
-drawGraphLegend = (name, max_change, start_date, end_date, bar_mod, pos_x, pos_y) => {
+drawGraphLegend = (name, max_change, bar_mod, pos_x, pos_y) => {
     noFill();
     stroke(color('white'));
     
@@ -148,23 +158,7 @@ drawGraphLegend = (name, max_change, start_date, end_date, bar_mod, pos_x, pos_y
     }
 
     //HORIZONTAL AXIS
-    noFill();
-    stroke(color('white'));
-    rect(pos_x - 10, pos_y + (scale_length/2), topWidth, 1);
-
-    let last_date = -1;
-    for(let i = start_date; i < end_date; i++){
-        let curr_date = Date(i/1000).getDate;
-        let curr_month = Date(i/1000).getMonth;
-
-        if(curr_date != last_date){
-            last_date = curr_date;
-
-            //Draw
-            rect((pos_x-10), pos_y + (scale_length/2), 1, 5);
-
-        }
-    }
+    rect(pos_x - 10, pos_y + (scale_length))
 
 };
 
@@ -259,21 +253,21 @@ function draw() {
         */
 
         //FIND THE LARGEST CHANGE IN VALUE
-        let max_change = 0;
+        let max_price = [];
         for(let i = 0; i < coinmarketTop10.length; i++){
             for(let k = 0; k < coinmarketTop10[i].length; k++){
-                if(max_change < Math.abs(coinmarketTop10[i][k].percent_change_24h)){
-                    max_change = Math.abs(coinmarketTop10[i][k].percent_change_24h);
+                if(max_price < Math.abs(coinmarketTop10[i][k].price)){
+                    max_price = Math.abs(coinmarketTop10[i][k].price);
                 }
             }
         }
 
-        console.log('max', max_change);
+        console.log('max', max_price);
        
         //DRAW DIAGRAMS
         let num_of_dates = coinmarketTop10.length;
         let num_of_currencies = coinmarketTop10[0].length;
-        max_change = Math.ceil(max_change/10)*10;   //round up to closest 10
+        max_price = Math.ceil(max_price/10)*10;   //round up to closest 10
         let bar_mod = 5;
         
         //Currency graphs
@@ -287,14 +281,14 @@ function draw() {
                 stroke(color('black'));
                 fill(calcColour(100, 10));
                 //ellipse(x, y, 5);
-                let bar_length = -coinmarketTop10[date_index][currency_index].percent_change_24h;   //minus(-) because everything is inverted on canvas
-                bar_length = (bar_length/max_change) * (max_change*bar_mod);
+                let bar_length = -coinmarketTop10[date_index][currency_index].price / 100;   //minus(-) because everything is inverted on canvas
+                bar_length = (bar_length/max_price) * (max_price*bar_mod);
                 rect(x, y, 10, bar_length);
             }
 
             drawGraphLegend(
                 coinmarketTop10[0][currency_index].name,
-                max_change, 
+                max_price, 
                 bar_mod, 
                 baseX, 
                 y
@@ -306,7 +300,7 @@ function draw() {
         textSize(20);
         stroke(color('white'));
         fill(color('white'));
-        text("Percentual change in\nvalue during 24 hours", (topWidth/2)-baseX, 25);
+        text("Price in\nUSD during 24 hours", (topWidth/2)-baseX, 25);
 
         //TODO: Change title to only be about %, add time axis to graph legend
 
