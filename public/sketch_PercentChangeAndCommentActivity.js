@@ -1,5 +1,4 @@
 /* Global Variabels */
-console.log("Running sketch2.js");
 
 const getApiData = async (api_url) => {
     let api_link = "http://localhost:3001/" + api_url;
@@ -31,13 +30,16 @@ getApiData("coinmarket")
                     //volume_24h: null,
                     percent_change_24h: null,
                     timestamp: null,
-                    comments_in_interval: 0
+                    date: [null, null],
+                    comments_in_interval: 0,
                 };
 
                 coinObj.name = top10[i].name;    
                 //coinObj.volume_24h = top10[i].quote.USD.volume_24h;    
                 coinObj.percent_change_24h = top10[i].quote.USD.percent_change_24h;  
                 coinObj.timestamp = new Date(top10[i].last_updated).getTime() / 1000;
+                coinObj.date[0] = new Date(top10[i].last_updated).getDate();
+                coinObj.date[1] = new Date(top10[i].last_updated).getMonth();
                 coins.push(coinObj);
             }
 
@@ -116,19 +118,19 @@ redditPosts:      [currency][post] {
 calcColour = (activity, avg_activity) => {
     colorMode(HSB);
 
-    //  ->  sat increases with higher than average activity
-    //  ->  sat decreases with lower than average activity
+    //  ->  sat is 0 with average activity
+    //  ->  sat increases with higher than average activity 
     
     percent_change = (activity/avg_activity - 1.0) * 100;
 
-    let sat = 50 + (percent_change/2);
+    let sat = Math.max(Math.min(percent_change, 100), 0);
 
-    //  ->  sat = 50 is average
-
-    return color(0, sat, 100)
+    return color(0, sat, 100);
 }
 
-drawGraphLegend = (name, max_change, start_date, end_date, bar_mod, pos_x, pos_y) => {
+drawGraphLegend = (name, max_change, bar_mod, pos_x, pos_y) => {
+    //console.log(name, max_change, );
+
     noFill();
     stroke(color('white'));
     
@@ -138,8 +140,10 @@ drawGraphLegend = (name, max_change, start_date, end_date, bar_mod, pos_x, pos_y
     rect(pos_x - 10, pos_y - (scale_length/2), 1, scale_length);
 
     //Place out text
-    text(name, pos_x - 10, pos_y + (scale_length/2) + 15);
+    textSize(20);
+    text(name, pos_x + 10, pos_y - (scale_length/2) + 15);
 
+    textSize(10);
     for(let i = max_change; i >= -max_change; i=i-10) {
         let text_s = i.toString() + "%";
         let text_x = pos_x - 40;
@@ -151,21 +155,6 @@ drawGraphLegend = (name, max_change, start_date, end_date, bar_mod, pos_x, pos_y
     noFill();
     stroke(color('white'));
     rect(pos_x - 10, pos_y + (scale_length/2), topWidth, 1);
-
-    let last_date = -1;
-    for(let i = start_date; i < end_date; i++){
-        let curr_date = Date(i/1000).getDate;
-        let curr_month = Date(i/1000).getMonth;
-
-        if(curr_date != last_date){
-            last_date = curr_date;
-
-            //Draw
-            rect((pos_x-10), pos_y + (scale_length/2), 1, 5);
-
-        }
-    }
-
 };
 
 function drawGradient(pos_x, pos_y, in_width, in_height, colour_a, colour_b) {
@@ -190,7 +179,7 @@ drawGradientLegend = (pos_x, pos_y) => {
     let pos_x2 = pos_x+15;
     let pos_y2 = pos_y+20;
 
-    drawGradient(pos_x2, pos_y2, 180, 40, calcColour(0, 1), calcColour(10, 1),);
+    drawGradient(pos_x2, pos_y2, 180, 40, calcColour(0, 1), calcColour(100, 1),);
     stroke(color('black'));
     noFill();
     rect(pos_x2, pos_y2, 180, 40);
@@ -208,9 +197,9 @@ drawGradientLegend = (pos_x, pos_y) => {
     text("Comment Activity", pos_x2, pos_y2-5);
 
     textSize(10);
-    text("100%\nDecrease", pos_x2, pos_y2+65);
-    text("Average\nActivity", pos_x2+75, pos_y2+65);
-    text("100%\nIncrease", pos_x2+145, pos_y2+65);
+    text("Average or\nlower", pos_x2, pos_y2+65);
+    text("50%\nincrease", pos_x2+75, pos_y2+65);
+    text("100+%\nincrease", pos_x2+145, pos_y2+65);
     
 };
 
@@ -233,11 +222,11 @@ function draw() {
     console.log("draw() called. ");
     
     
-    if (coinmarketTop10.length > 0) {
+    if (coinmarketTop10.length > 0 && redditPosts['bitcoin'].length > 0) {
         console.log(`We got data. coinmarket: ${coinmarketTop10.length}, reddit: ${Object.keys(redditPosts).length}`);
-
-        /*
+        
         //COUNT COMMENTS IN INTERVALS
+        let crypto_Date_Reached = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // to keep track of each
         //For all dates
         for(let date_index = 0; date_index < coinmarketTop10.length; date_index++) {
             
@@ -245,30 +234,46 @@ function draw() {
             for(let currency_index = 0; currency_index < coinmarketTop10[date_index].length; currency_index++){
                 //Read reddit comments that happened before current date
                 //Once current date is reached, stop and move to next date
-                let date_iter = 0;
                 let curr_key = Object.keys(redditPosts)[currency_index];
-                while(redditPosts[curr_key][date_iter] && 
-                    redditPosts[curr_key][date_iter].timestamp < coinmarketTop10[date_index][currency_index].timestamp) {
-                    // console.log(`date_iter: ${date_iter}, redditPosts[curr_key][date_iter]: ${redditPosts[curr_key][date_iter]}, timestamptoCompare: ${coinmarketTop10[date_index][currency_index].timestamp}`);
-                    
-                    coinmarketTop10[date_index][currency_index].comments_in_interval += redditPosts[curr_key][date_iter].num_comments;
-                    date_iter++;
+
+                while(redditPosts[curr_key][crypto_Date_Reached[currency_index]] &&
+                    redditPosts[curr_key][crypto_Date_Reached[currency_index]].timestamp < coinmarketTop10[date_index][currency_index].timestamp) {
+                    //console.log("Comments in Interval", curr_key, coinmarketTop10[date_index][currency_index].timestamp); //To see the how many comments have the same timestamps        
+                    coinmarketTop10[date_index][currency_index].comments_in_interval += redditPosts[curr_key][crypto_Date_Reached[currency_index]].num_comments;
+
+                    crypto_Date_Reached[currency_index]++;
                 }
+                //console.log("Comments in Interval", curr_key, coinmarketTop10[date_index][currency_index].comments_in_interval); //Comments in each interval
             }
         }
-        */
+        
 
-        //FIND THE LARGEST CHANGE IN VALUE
+        //STATISTICS
         let max_change = 0;
+        
+        let comment_avg_per_time_interval = {};
+        for(let i = 0; i < coinmarketTop10[0].length; i++){
+            let currency = coinmarketTop10[0][i].name;
+            comment_avg_per_time_interval[currency] = 0;
+        }
+
         for(let i = 0; i < coinmarketTop10.length; i++){
             for(let k = 0; k < coinmarketTop10[i].length; k++){
+                
+                //Find largest percentual change
                 if(max_change < Math.abs(coinmarketTop10[i][k].percent_change_24h)){
                     max_change = Math.abs(coinmarketTop10[i][k].percent_change_24h);
                 }
+
+                //Calculate comment average (skip first entry due to the comment being accumulated outside of gathering dates)
+                if(i != 0){
+                    let currency = coinmarketTop10[i][k].name;
+                    comment_avg_per_time_interval[currency] += (coinmarketTop10[i][k].comments_in_interval / coinmarketTop10.length); 
+                }
             }
         }
 
-        console.log('max', max_change);
+        //console.log('cmnt avg', comment_avg_per_time_interval);
        
         //DRAW DIAGRAMS
         let num_of_dates = coinmarketTop10.length;
@@ -281,15 +286,30 @@ function draw() {
             let y = (baseY + currency_index * (topHeight / num_of_currencies));
 
             //Bars
+            let last_date = coinmarketTop10[0][currency_index].date;
             for (let date_index = 0; date_index < num_of_dates; date_index++) {
                 let x = baseX + date_index * (topWidth / num_of_dates);
 
                 stroke(color('black'));
-                fill(calcColour(100, 10));
+                fill(calcColour(
+                    coinmarketTop10[date_index][currency_index].comments_in_interval,
+                    comment_avg_per_time_interval[coinmarketTop10[date_index][currency_index].name]
+                    ));
                 //ellipse(x, y, 5);
                 let bar_length = -coinmarketTop10[date_index][currency_index].percent_change_24h;   //minus(-) because everything is inverted on canvas
                 bar_length = (bar_length/max_change) * (max_change*bar_mod);
                 rect(x, y, 10, bar_length);
+
+                if(last_date[0] != coinmarketTop10[date_index][currency_index].date[0]) {
+                    last_date = coinmarketTop10[date_index][currency_index].date;
+                    
+                    stroke(color('white'));
+                    fill(color('white'));
+                    rect(x, (y + max_change*bar_mod - 5), 1, 5);
+
+                    textSize(10);
+                    text((last_date[0] + "/" + last_date[1]), (x-10), (y + max_change*bar_mod + 15));
+                }
             }
 
             drawGraphLegend(
@@ -299,7 +319,6 @@ function draw() {
                 baseX, 
                 y
             );
-            
         }
 
         //Title

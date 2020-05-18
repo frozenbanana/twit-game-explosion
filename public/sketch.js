@@ -26,8 +26,6 @@ const getApiData = async (api_url) => {
     return response.json().then((json) => json.data);
 };
 
-console.log("Trying to get data...");
-
 // Custom interface to raw api data
 coinmarketTop10 = [];
 getApiData("coinmarket")
@@ -98,7 +96,7 @@ getApiData("reddit/")
             }
         }
     
-        console.log("Filtered reddit data: ", redditPosts); 
+        //console.log("Filtered reddit data: ", redditPosts); 
 
     })
     .catch((err) => {
@@ -168,30 +166,8 @@ function draw() {
         console.log(`We got data. coinmarket: ${coinmarketTop10.length}, reddit: ${Object.keys(redditPosts).length}`);
 
         //COUNT COMMENTS IN INTERVALS
-        //For all dates
-
-        /*for(let date_index = 0; date_index < coinmarketTop10.length; date_index++) {
-            
-            //For each currency
-            for(let currency_index = 0; currency_index < coinmarketTop10[date_index].length; currency_index++){
-                //Read reddit comments that happened before current date
-                //Once current date is reached, stop and move to next date
-                let timeStamp_Registered_Comments;
-                let date_iter = 0;
-                let curr_key = Object.keys(redditPosts)[currency_index];
-                while(redditPosts[curr_key][date_iter] && 
-                    redditPosts[curr_key][date_iter].timestamp < coinmarketTop10[date_index][currency_index].timestamp) {
-                    // console.log(`date_iter: ${date_iter}, redditPosts[curr_key][date_iter]: ${redditPosts[curr_key][date_iter]}, timestamptoCompare: ${coinmarketTop10[date_index][currency_index].timestamp}`);
-                    
-                    coinmarketTop10[date_index][currency_index].comments_in_interval += redditPosts[curr_key][date_iter].num_comments;
-                    date_iter++;
-                }
-            }
-        }*/
-
-        
         let crypto_Date_Reached = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // to keep track of each
-
+        //For all dates
         for(let date_index = 0; date_index < coinmarketTop10.length; date_index++) {
             
             //For each currency
@@ -221,7 +197,7 @@ function draw() {
             }
         }
 
-        console.log('New NormFact', max_val); 
+        //console.log('New NormFact', max_val); 
         let normFact = max_val;
         let numOfDates = coinmarketTop10.length;
 
