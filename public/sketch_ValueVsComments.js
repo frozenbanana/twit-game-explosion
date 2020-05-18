@@ -16,6 +16,7 @@ const getApiData = async (api_url) => {
 // GET TOP 10 CURRENCIES
 let api_data = [];
 coinmarketTop10 = [];
+let prices_references = [];
 getApiData("coinmarket")
     .then((data) => {
         console.log("getApiData::Successfully retreived coinmarket data:", data);
@@ -24,13 +25,35 @@ getApiData("coinmarket")
         // Used for Y-axis max height
         for ( let i = 0; i < 10; i++) {
             prices_references.push(api_data[0].data.slice(0, 10)[i].quote.USD.price * 2);
+            if (i < 5) {
+                for (let j = 0 ; j < 20; j++) {
+                    console.log('name',api_data[j].data.slice(0, 10)[i].name,'date:',j,api_data[j].data.slice(0, 10)[i].quote.USD.price)
+                }
+            }
         }
         
-        console.log('price references: ',prices_references);
+        // console.log('price references: ', prices_references);
         api_data.forEach(dataAtTimestamp => {
             let top10 = dataAtTimestamp.data.slice(0, 10);
             
             let coins = [];
+            
+
+            // TODO, use this object to filter top10.length so coinObjects are placed
+            // in the right index.
+            
+            let coinsIdentifier = {
+                tether: 825,
+                bitcoin: 1,
+                ethereum: 1027,
+                litecoin: 2,
+                eos: 1765,
+                bitcoincash: 1831,
+                bitcoinsv: 3602,
+                ethereumclassic: 1321,
+                ripple: 52,
+                tron: 1958
+            };
             
             for (let i = 0; i < top10.length; i++) {
                 // Interface
@@ -151,7 +174,7 @@ drawGraphLegend = (name, max_change, bar_mod, pos_x, pos_y) => {
     text(name, pos_x - 10, pos_y + (scale_length/2) + 15);
 
     for(let i = max_change; i >= -max_change; i=i-10) {
-        let text_s = i.toString() + "%";
+        let text_s = Math.round(((i + Number.EPSILON) * 10) / 10).toString() + "USD";
         let text_x = pos_x - 40;
         let text_y = pos_y + i*bar_mod;
         text(text_s, text_x, text_y);
@@ -226,7 +249,6 @@ function setup() {
 function draw() {
     console.log("draw() called. ");
     
-    
     if (coinmarketTop10.length > 0) {
         console.log(`We got data. coinmarket: ${coinmarketTop10.length}, reddit: ${Object.keys(redditPosts).length}`);
 
@@ -252,47 +274,35 @@ function draw() {
         }
         */
 
-        //FIND THE LARGEST CHANGE IN VALUE
-        let max_price = [];
-        for(let i = 0; i < coinmarketTop10.length; i++){
-            for(let k = 0; k < coinmarketTop10[i].length; k++){
-                if(max_price < Math.abs(coinmarketTop10[i][k].price)){
-                    max_price = Math.abs(coinmarketTop10[i][k].price);
-                }
-            }
-        }
-
-        console.log('max', max_price);
-       
         //DRAW DIAGRAMS
         let num_of_dates = coinmarketTop10.length;
         let num_of_currencies = coinmarketTop10[0].length;
-        max_price = Math.ceil(max_price/10)*10;   //round up to closest 10
-        let bar_mod = 5;
+        let bar_mod = 1;
         
         //Currency graphs
-        for (let currency_index = 0; currency_index < num_of_currencies; currency_index++) {
+        for (let currency_index = 5; currency_index < 6; currency_index++) {
             let y = (baseY + currency_index * (topHeight / num_of_currencies));
-
+            
             //Bars
             for (let date_index = 0; date_index < num_of_dates; date_index++) {
                 let x = baseX + date_index * (topWidth / num_of_dates);
 
                 stroke(color('black'));
                 fill(calcColour(100, 10));
-                //ellipse(x, y, 5);
-                let bar_length = -coinmarketTop10[date_index][currency_index].price / 100;   //minus(-) because everything is inverted on canvas
-                bar_length = (bar_length/max_price) * (max_price*bar_mod);
-                rect(x, y, 10, bar_length);
+                let max_height = coinmarketTop10[0][currency_index].price_reference;
+                let bar_length = coinmarketTop10[date_index][currency_index].price;   //minus(-) because everything is inverted on canvas
+                console.log(`${bar_length} / ${max_height} = ${bar_length/max_height}`);
+                bar_length = (bar_length/max_height) * 100; // 10 is heightest
+                rect(x, y, 10, -bar_length);
             }
 
-            drawGraphLegend(
-                coinmarketTop10[0][currency_index].name,
-                max_price, 
-                bar_mod, 
-                baseX, 
-                y
-            );
+            // drawGraphLegend(
+            //     coinmarketTop10[0][currency_index].name,
+            //     coinmarketTop10[0][currency_index].price_reference, 
+            //     bar_mod, 
+            //     baseX, 
+            //     y
+            // );
             
         }
 
