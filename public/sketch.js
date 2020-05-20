@@ -182,11 +182,10 @@ function draw() {
                     coinmarketTop10[date_index][currency_index].comments_in_interval += redditPosts[curr_key][crypto_Date_Reached[currency_index]].num_comments;
                     crypto_Date_Reached[currency_index]++;
                 }
-                //console.log("Comments in Interval", curr_key, coinmarketTop10[date_index][currency_index].comments_in_interval); //Comments in each interval
+                console.log("Comments in Interval", curr_key, coinmarketTop10[date_index][currency_index].comments_in_interval); //Comments in each interval
             }
         }
        
-
         //FIND MAX VALUE FOR FORMATTING
         let max_val = 0;
         for(let i = 0; i < coinmarketTop10.length; i++){

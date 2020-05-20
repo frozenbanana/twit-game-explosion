@@ -28,7 +28,7 @@ getApiData("coinmarket")
                 coinObj = {
                     name: null,
                     //volume_24h: null,
-                    percent_change_24h: null,
+                    percent_change_1h: null,
                     timestamp: null,
                     date: [null, null],
                     comments_in_interval: 0,
@@ -36,7 +36,7 @@ getApiData("coinmarket")
 
                 coinObj.name = top10[i].name;    
                 //coinObj.volume_24h = top10[i].quote.USD.volume_24h;    
-                coinObj.percent_change_24h = top10[i].quote.USD.percent_change_24h;  
+                coinObj.percent_change_1h = top10[i].quote.USD.percent_change_1h;  
                 coinObj.timestamp = new Date(top10[i].last_updated).getTime() / 1000;
                 coinObj.date[0] = new Date(top10[i].last_updated).getDate();
                 coinObj.date[1] = new Date(top10[i].last_updated).getMonth();
@@ -121,14 +121,18 @@ calcColour = (activity, avg_activity) => {
     //  ->  sat is 0 with average activity
     //  ->  sat increases with higher than average activity 
     
-    percent_change = (activity/avg_activity - 1.0) * 100;
+    let change = (activity/avg_activity - 1.0) * 100;
 
-    let sat = Math.max(Math.min(percent_change, 100), 0);
+    //The reddest color represents this percentage
+    let max_percent = 500;
+    let mod = max_percent/100;
+
+    let sat = Math.max(Math.min(change/mod, 100), 0);
 
     return color(0, sat, 100);
 }
 
-drawGraphLegend = (name, max_change, bar_mod, pos_x, pos_y) => {
+drawGraphLegend = (name, max_change, step_length, bar_mod, pos_x, pos_y) => {
     //console.log(name, max_change, );
 
     noFill();
@@ -144,10 +148,10 @@ drawGraphLegend = (name, max_change, bar_mod, pos_x, pos_y) => {
     text(name, pos_x + 10, pos_y - (scale_length/2) + 15);
 
     textSize(10);
-    for(let i = max_change; i >= -max_change; i=i-10) {
+    for(let i = max_change; i >= -max_change; i=i-step_length) {
         let text_s = i.toString() + "%";
         let text_x = pos_x - 40;
-        let text_y = pos_y + i*bar_mod;
+        let text_y = pos_y - i*bar_mod;
         text(text_s, text_x, text_y);
     }
 
@@ -172,7 +176,7 @@ drawGradientLegend = (pos_x, pos_y) => {
     //Background
     fill(color('white'));
     stroke(color('white'));
-    rect(pos_x, pos_y, 200, 100);
+    rect(pos_x, pos_y, 210, 100);
 
     //Gradent Rectangle     //TODO: Change title to only be about %, add time axis to graph ledger
     
@@ -198,8 +202,8 @@ drawGradientLegend = (pos_x, pos_y) => {
 
     textSize(10);
     text("Average or\nlower", pos_x2, pos_y2+65);
-    text("50%\nincrease", pos_x2+75, pos_y2+65);
-    text("100+%\nincrease", pos_x2+145, pos_y2+65);
+    text("250%\nincrease", pos_x2+75, pos_y2+65);
+    text("500%\nincrease", pos_x2+150, pos_y2+65);
     
 };
 
@@ -239,7 +243,7 @@ function draw() {
                 while(redditPosts[curr_key][crypto_Date_Reached[currency_index]] &&
                     redditPosts[curr_key][crypto_Date_Reached[currency_index]].timestamp < coinmarketTop10[date_index][currency_index].timestamp) {
                     //console.log("Comments in Interval", curr_key, coinmarketTop10[date_index][currency_index].timestamp); //To see the how many comments have the same timestamps        
-                    coinmarketTop10[date_index][currency_index].comments_in_interval += redditPosts[curr_key][crypto_Date_Reached[currency_index]].num_comments;
+                    coinmarketTop10[date_index][currency_index].comments_in_interval += 1 + redditPosts[curr_key][crypto_Date_Reached[currency_index]].num_comments;
 
                     crypto_Date_Reached[currency_index]++;
                 }
@@ -261,8 +265,8 @@ function draw() {
             for(let k = 0; k < coinmarketTop10[i].length; k++){
                 
                 //Find largest percentual change
-                if(max_change < Math.abs(coinmarketTop10[i][k].percent_change_24h)){
-                    max_change = Math.abs(coinmarketTop10[i][k].percent_change_24h);
+                if(max_change < Math.abs(coinmarketTop10[i][k].percent_change_1h)){
+                    max_change = Math.abs(coinmarketTop10[i][k].percent_change_1h);
                 }
 
                 //Calculate comment average (skip first entry due to the comment being accumulated outside of gathering dates)
@@ -278,8 +282,9 @@ function draw() {
         //DRAW DIAGRAMS
         let num_of_dates = coinmarketTop10.length;
         let num_of_currencies = coinmarketTop10[0].length;
-        max_change = Math.ceil(max_change/10)*10;   //round up to closest 10
-        let bar_mod = 5;
+        let step_length = 2;
+        max_change = Math.ceil(max_change/step_length)*step_length;   //round up to closest multiple of step_length
+        let bar_mod = 25;
         
         //Currency graphs
         for (let currency_index = 0; currency_index < num_of_currencies; currency_index++) {
@@ -296,7 +301,7 @@ function draw() {
                     comment_avg_per_time_interval[coinmarketTop10[date_index][currency_index].name]
                     ));
                 //ellipse(x, y, 5);
-                let bar_length = -coinmarketTop10[date_index][currency_index].percent_change_24h;   //minus(-) because everything is inverted on canvas
+                let bar_length = -coinmarketTop10[date_index][currency_index].percent_change_1h;   //minus(-) because everything is inverted on canvas
                 bar_length = (bar_length/max_change) * (max_change*bar_mod);
                 rect(x, y, 10, bar_length);
 
@@ -315,6 +320,7 @@ function draw() {
             drawGraphLegend(
                 coinmarketTop10[0][currency_index].name,
                 max_change, 
+                step_length,
                 bar_mod, 
                 baseX, 
                 y
@@ -325,7 +331,9 @@ function draw() {
         textSize(20);
         stroke(color('white'));
         fill(color('white'));
-        text("Percentual change in\nvalue during 24 hours", (topWidth/2)-baseX, 25);
+        text("Percentual change in value over 1 hour", (topWidth/2)-3*baseX, 25);
+        textSize(15);
+        text("*Data gathered every 3 hours", (topWidth/2)-3*baseX, 45);
 
         //TODO: Change title to only be about %, add time axis to graph legend
 
