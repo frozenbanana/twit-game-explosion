@@ -1,5 +1,7 @@
 /* Global Variabels */
 
+//import { text } from "express";
+
 const getApiData = async (api_url) => {
     let api_link = "http://localhost:3001/" + api_url;
     console.log("Accessing api data for: ", api_link);
@@ -137,28 +139,41 @@ drawGraphLegend = (name, max_change, step_length, bar_mod, pos_x, pos_y) => {
 
     noFill();
     stroke(color('white'));
+
+    let scale_length = 2*max_change*bar_mod;
+
+    //Place out text (Name
+    textSize(30);
+    text(name, pos_x + (topWidth/2), pos_y - (scale_length/2) - 30);
     
     //VERTICAL AXIS
     //Place out scale
-    let scale_length = 2*max_change*bar_mod;
+    
     rect(pos_x - 10, pos_y - (scale_length/2), 1, scale_length);
 
-    //Place out text
+    //
+    fill(color('white'));
     textSize(20);
-    text(name, pos_x + 10, pos_y - (scale_length/2) + 15);
+    text("Change in Percent", pos_x-80, pos_y - (scale_length/2) - 20);
 
-    textSize(10);
+    textSize(15);
     for(let i = max_change; i >= -max_change; i=i-step_length) {
         let text_s = i.toString() + "%";
         let text_x = pos_x - 40;
         let text_y = pos_y - i*bar_mod;
         text(text_s, text_x, text_y);
+
+        rect(pos_x-10, text_y, 10, 1);
     }
 
     //HORIZONTAL AXIS
     noFill();
     stroke(color('white'));
     rect(pos_x - 10, pos_y + (scale_length/2), topWidth, 1);
+
+    fill(color('white'));
+    textSize(20);
+    text("Date", pos_x + topWidth, pos_y + (scale_length/2) + 5);
 };
 
 function drawGradient(pos_x, pos_y, in_width, in_height, colour_a, colour_b) {
@@ -176,48 +191,48 @@ drawGradientLegend = (pos_x, pos_y) => {
     //Background
     fill(color('white'));
     stroke(color('white'));
-    rect(pos_x, pos_y, 210, 100);
+    rect(pos_x, pos_y, 420, 200);
 
     //Gradent Rectangle     //TODO: Change title to only be about %, add time axis to graph ledger
     
-    let pos_x2 = pos_x+15;
-    let pos_y2 = pos_y+20;
+    let pos_x2 = pos_x+30;
+    let pos_y2 = pos_y+40;
 
-    drawGradient(pos_x2, pos_y2, 180, 40, calcColour(0, 1), calcColour(100, 1),);
+    drawGradient(pos_x2, pos_y2, 360, 80, calcColour(0, 1), calcColour(100, 1),);
     stroke(color('black'));
     noFill();
-    rect(pos_x2, pos_y2, 180, 40);
+    rect(pos_x2, pos_y2, 360, 80);
 
     //help lines
-    rect(pos_x2+0, pos_y2+30, 1, 20);
-    rect(pos_x2+90,pos_y2+30, 1, 20);
-    rect(pos_x2+180, pos_y2+30, 1, 20);
+    rect(pos_x2+0, pos_y2+60, 1, 40);
+    rect(pos_x2+180,pos_y2+60, 1, 40);
+    rect(pos_x2+360, pos_y2+60, 1, 40);
 
     //Text
     fill(color('black'));
     stroke(color('black'));
 
-    textSize(15);
-    text("Comment Activity", pos_x2, pos_y2-5);
+    textSize(20);
+    text("Post and Comment Activity", pos_x2, pos_y2-10);
 
-    textSize(10);
-    text("Average or\nlower", pos_x2, pos_y2+65);
-    text("250%\nincrease", pos_x2+75, pos_y2+65);
-    text("500%\nincrease", pos_x2+150, pos_y2+65);
+    textSize(15);
+    text("Average or\nlower", pos_x2, pos_y2+130);
+    text("250%\nincrease", pos_x2+150, pos_y2+130);
+    text("500%\nincrease", pos_x2+300+25, pos_y2+130);
     
 };
 
 function setup() {
-    let width = 1280;
-    let height = 2800;
+    let width = 2560;//1280;
+    let height = 5600;//2800;
     createCanvas(width, height);
     background(0);
     textSize(10);
     
 
     // Assignment of global variables
-    baseX = 50;
-    baseY = 175;
+    baseX = 100;//50;
+    baseY = 350;//175;
     topWidth = width - 2 * baseX;
     topHeight = height - 1 * baseY;
 }
@@ -284,7 +299,7 @@ function draw() {
         let num_of_currencies = coinmarketTop10[0].length;
         let step_length = 2;
         max_change = Math.ceil(max_change/step_length)*step_length;   //round up to closest multiple of step_length
-        let bar_mod = 25;
+        let bar_mod = 50;//25;
         
         //Currency graphs
         for (let currency_index = 0; currency_index < num_of_currencies; currency_index++) {
@@ -303,16 +318,16 @@ function draw() {
                 //ellipse(x, y, 5);
                 let bar_length = -coinmarketTop10[date_index][currency_index].percent_change_1h;   //minus(-) because everything is inverted on canvas
                 bar_length = (bar_length/max_change) * (max_change*bar_mod);
-                rect(x, y, 10, bar_length);
+                rect(x, y, 20, bar_length);
 
                 if(last_date[0] != coinmarketTop10[date_index][currency_index].date[0]) {
                     last_date = coinmarketTop10[date_index][currency_index].date;
                     
                     stroke(color('white'));
                     fill(color('white'));
-                    rect(x, (y + max_change*bar_mod - 5), 1, 5);
+                    rect(x, (y + max_change*bar_mod - 10), 1, 10);
 
-                    textSize(10);
+                    textSize(15);
                     text((last_date[0] + "/" + last_date[1]), (x-10), (y + max_change*bar_mod + 15));
                 }
             }
@@ -328,17 +343,17 @@ function draw() {
         }
 
         //Title
-        textSize(20);
+        textSize(40);
         stroke(color('white'));
         fill(color('white'));
-        text("Percentual change in value over 1 hour", (topWidth/2)-3*baseX, 25);
-        textSize(15);
-        text("*Data gathered every 3 hours", (topWidth/2)-3*baseX, 45);
+        text("Percentual change in value over 1 hour", (topWidth/2)-3*baseX, 40);
+        textSize(20);
+        text("*Data gathered every 3 hours", (topWidth/2)-3*baseX, 65);
 
         //TODO: Change title to only be about %, add time axis to graph legend
 
         //Gradient legend
-        drawGradientLegend(1000, 20);
+        drawGradientLegend(2000, 20);
         
         noLoop();   
     }
