@@ -1,7 +1,3 @@
-// import { reject } from "bluebird";
-
-//import { text } from "express";
-
 /* Global Variabels */
 console.log("Running sketch2.js");
 
@@ -198,6 +194,19 @@ function drawGraphAxes(name, name_y, origo_x, origo_y, max_x, max_y) {
 
 }
 
+function drawBlankXAxis(name, pos_x, pos_y, x_axis_len) {
+    stroke(color('white'));
+    fill(color('white'));
+
+    //X axis
+    rect(pos_x, pos_y, x_axis_len, 1);
+
+    textAlign(CENTER);
+    textSize(25);
+    text("Date", pos_x + (x_axis_len/2), pos_y + 60);
+    textAlign(LEFT);
+}
+
 function markXAxis(date, pos_x, pos_y_0) {
 
     stroke(color('white'));
@@ -242,8 +251,81 @@ function markYAxisPrice(pos_x, pos_y_0, y_axis_len, scaling_mod, max_price, min_
     textAlign(LEFT);
 }
 
-function markYAxisCommens(pos_x, pos_y_0, y_axis_len, scaling_mod, max_comments) {
-    //bloop
+function calcProportionalValues(max_value, y_axis_len) {
+
+    //Go from 1000000 to 0.000001 and figure out the magnitude of the number
+    let magnitude = 1000000;
+    let fix = 0
+    for (let j = 6; j > -6; j--) {
+        if (j < 0) { fix = abs(j); }
+        if ((max_value / magnitude) >= 1) { j = -7; } //Break loop
+        else { magnitude /= 10; }   //Elsewise divide by 10
+    }
+
+    //Scaling modifier
+    let ref_magnitude = magnitude * 10;
+    let magnitude_mod = Math.ceil(max_value / ref_magnitude) * ref_magnitude + magnitude;
+    let scaling_mod = y_axis_len / magnitude_mod;
+
+    //return [scaling_mod, magnitude, fix];
+    return {
+        scaling_mod: scaling_mod,
+        magnitude: magnitude,
+        fix: fix,
+    }
+}
+
+function drawYAxis(name, pos_x, pos_y_0, y_axis_len, scaling_mod, magnitude, fix, orientation) {
+
+    //Draw base axis
+    stroke(color('white'));
+    fill(color('white'));
+
+    rect(pos_x, pos_y_0, 1, -y_axis_len);
+
+    //Draw value lines, value numbers and axis name 
+    textSize(20);
+    let text_offset_x = 20;
+    let text_offset_y = 10;
+    if(orientation === 0) {
+        textSize(20);
+        text(name, pos_x - text_offset_x, pos_y_0 - y_axis_len - text_offset_y*2);
+
+        textAlign(RIGHT);
+
+        for (let y = 0; y < y_axis_len; y += magnitude * scaling_mod) {
+            rect(pos_x - 10, (pos_y_0 - y), 20, 1);
+    
+            let value = Math.round((y / scaling_mod) / magnitude) * magnitude;
+
+            let tx = pos_x - text_offset_x;
+            let ty = pos_y_0 - y + text_offset_y
+            text(value.toFixed(fix), tx, ty);
+        }
+    
+        textAlign(LEFT);
+    }
+    else if (orientation === 1){
+
+        textAlign(RIGHT);
+
+        textSize(20);
+        text(name, pos_x + text_offset_x, pos_y_0 - y_axis_len - text_offset_y*2);
+
+        textAlign(LEFT);
+
+        for (let y = 0; y < y_axis_len; y += magnitude * scaling_mod) {
+            rect(pos_x - 10, (pos_y_0 - y), 20, 1);
+    
+            let value = Math.round((y / scaling_mod) / magnitude) * magnitude;
+            let tx = pos_x + text_offset_x;
+            let ty = pos_y_0 - y + text_offset_y
+            text(value.toFixed(fix), tx, ty);
+        }
+    }
+    
+
+    
 }
 
 function bigDrawValueTime(num_of_dates, num_of_currencies, x_axis_len, y_axis_len) {
@@ -347,84 +429,113 @@ function bigDrawCommentTime(num_of_dates, num_of_currencies, x_axis_len, y_axis_
     }
 
     //STATISTICS
+    let max_price = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     let max_comments = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    //let inf = Number.POSITIVE_INFINITY;
-    //let min_price = [ inf, inf, inf, inf, inf, inf, inf, inf, inf, inf ];
     for (let curr_iter = 0; curr_iter < num_of_currencies; curr_iter++) {
         for (let date_iter = 1; date_iter < num_of_dates; date_iter++) {
+            if (max_price[curr_iter] < coinmarketTop10[date_iter][curr_iter].price) {
+                max_price[curr_iter] = coinmarketTop10[date_iter][curr_iter].price;
+            }
             if (max_comments[curr_iter] < coinmarketTop10[date_iter][curr_iter].comments_in_interval) {
                 max_comments[curr_iter] = coinmarketTop10[date_iter][curr_iter].comments_in_interval;
             }
-            //if(min_price[curr_iter] > coinmarketTop10[date_iter][curr_iter].price){
-            //    min_price[curr_iter] = coinmarketTop10[date_iter][curr_iter].price;
-            //}
         }
     }
 
-    //
-
     for (let curr_iter = 0; curr_iter < num_of_currencies; curr_iter++) {
+        //Newer
+        let price_cat = calcProportionalValues(max_price[curr_iter], y_axis_len);
+        let comment_cat = calcProportionalValues(max_comments[curr_iter], y_axis_len);
+        //let scaling_mod = ret_cat[0];
+        //let magnitude = ret_cat[1];
+        //let fix = ret_cat[2];
 
-        drawGraphAxes(
-            coinmarketTop10[0][curr_iter].name,
-            "Nr of Posts/Comments",
+        //console.log("s", scaling_mod);
+
+        let y_axis_0 = (canvasY / (num_of_currencies + 1)) * (curr_iter + 1);
+
+        //Text
+        textAlign(CENTER);
+        textSize(50);
+        stroke(color('white'));
+        fill(color('white'));
+        let title = coinmarketTop10[0][curr_iter].name;
+        text(title, (canvasX/2) + baseX + (x_axis_len/2), y_axis_0 - y_axis_len - 50);
+        textAlign(LEFT);
+
+        drawBlankXAxis(
+            "Date",
             (canvasX / 2) + baseX,
-            (canvasY / (num_of_currencies + 1)) * (curr_iter + 1),
-            x_axis_len,
-            y_axis_len,
+            y_axis_0,
+            x_axis_len
         );
 
-        let scaling_mod = y_axis_len / (max_comments[curr_iter]);
-        let y_axis_0 = (canvasY / (num_of_currencies + 1)) * (curr_iter + 1);
-        /*
-        markYAxisComments(
-            (canvasX/2) + baseX,
+        drawYAxis(
+            "Price (USD)",
+            (canvasX / 2) + baseX,
             y_axis_0,
             y_axis_len,
-            scaling_mod,
-            max_comments[curr_iter]
+            price_cat.scaling_mod,
+            price_cat.magnitude,
+            price_cat.fix,
+            0
         );
-        */
-       drawPointAndLine(
+
+        drawYAxis(
+            "Nr of Posts/Comments",
             (canvasX / 2) + baseX + x_axis_len,
-            y_axis_0 - 1 * scaling_mod,
-            (canvasX / 2) + baseX,
-            y_axis_0 - 1 * scaling_mod
+            y_axis_0,
+            y_axis_len,
+            comment_cat.scaling_mod,
+            comment_cat.magnitude,
+            comment_cat.fix,
+            1,
         );
+
+
         //
         let prev_x = (canvasX / 2) + baseX;
-        let prev_y = y_axis_0;
-        prev_y -= coinmarketTop10[1][curr_iter].comments_in_interval * scaling_mod;
+        let prev_price_y = y_axis_0 - coinmarketTop10[1][curr_iter].price * price_cat.scaling_mod;
 
         let last_date = coinmarketTop10[1][curr_iter].date;
         for (let date_iter = 1; date_iter < num_of_dates; date_iter++) {
             //x
             let x = (canvasX / 2) + baseX + date_iter * (x_axis_len / num_of_dates);
+            //Comments
+            //stroke(color('black'));
+            stroke(color('#9C6ECC'));
+            fill(color('#9C6ECC'));
+            rect(x, y_axis_0, 4, -coinmarketTop10[date_iter][curr_iter].comments_in_interval * comment_cat.scaling_mod);
 
-            //y = base_y - price*mod
-            let y = y_axis_0;
-
-            y -= coinmarketTop10[date_iter][curr_iter].comments_in_interval * scaling_mod;
-
+            //temp text above each bar
             /*
-            drawPointAndLine(
+            stroke(color('white'));
+            textSize(10);
+            text(
+                coinmarketTop10[date_iter][curr_iter].comments_in_interval,
                 x,
-                y,
-                prev_x,
-                prev_y
+                y_axis_0 - coinmarketTop10[date_iter][curr_iter].comments_in_interval * comment_cat.scaling_mod - 15
             );
             */
-            stroke(color('black'));
-            fill(color('#9C6ECC'));
-            rect(x, y_axis_0, 4, -coinmarketTop10[date_iter][curr_iter].comments_in_interval * scaling_mod);
+            //
 
             if (last_date[0] != coinmarketTop10[date_iter][curr_iter].date[0]) {
                 last_date = coinmarketTop10[date_iter][curr_iter].date;
                 markXAxis(last_date, x, y_axis_0);
             }
 
+            
+            //Price
+            let price_y = y_axis_0 - coinmarketTop10[date_iter][curr_iter].price * price_cat.scaling_mod;
+            drawPointAndLine(
+                x,
+                price_y,
+                prev_x,
+                prev_price_y
+            );
+
             prev_x = x;
-            prev_y = y;
+            prev_price_y = price_y;
         }//date_iter
     }//curr_iter
 }
