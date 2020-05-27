@@ -15,11 +15,6 @@ const readFiles = async (path, isDirty) => {
         dir.readFiles(path,
             function(err, content, next) {
                 if (err) throw err;
-                //console.log('Reading file from ', path,': ', idx++);
-                
-                // if (path === 'data/coinmarketcap')
-                //     console.log('content:', content);  // get content of files
-
                 bucket.push(JSON.parse(content));
                 next();
             },
@@ -68,6 +63,13 @@ function cleanRedditData(subredditfiles, coinName) {
 let coinmarketBucket = {};
 readFiles('data/coinmarketcap', false).then(bucket => { 
     console.log(`Successfully loaded \x1b[36mcoinmarketcap\x1b[0m with \x1b[32m${bucket.length}\x1b[0m unique of \x1b[32m${bucket.length}\x1b[0m post total.`);
+    console.log("Done.")
+    console.log("---------------------------------------------------------------------------");
+    console.log("API endpoints available: ");
+    console.log("\x1b[32m/reddit\x1b[0m           -> Get all reddit data.");
+    console.log("\x1b[32m/reddit/:subreddit\x1b[0m-> Get reddit data from specific subreddit.");
+    console.log("\x1b[32m/coinmarket\x1b[0m       -> Get all coinmarketcap data.");
+    console.log("---------------------------------------------------------------------------");
     coinmarketBucket = bucket; 
 });
 
@@ -98,14 +100,15 @@ readFiles(filePath + 'tronix',           true).then(bucket => redditBucket.tron 
 
 
 // Set up the server-------------------------------------------------------------------------------
-// process.env.PORT is related to deploying on heroku
 const server = app.listen(process.env.PORT || 3001, listen);
 
 // This call back just tells us that the server has started
 function listen() {
     let host = server.address().address;
     let port = server.address().port;
-    console.log("Example app listening at http://" + host + ":" + port);
+    console.log("Server listening at http://" + host + ":" + port);
+    console.log("---------------------------------------------------------------------------");
+    console.log("Filtering data....");
 }
 
 //REDDIT
